@@ -1,0 +1,6 @@
+[*.cs]
+
+# EF Core generates migration code containing constant arrays.
+# CA1861 is not actionable here because the generated code is
+# owned by EF Core and should not be manually optimized.
+dotnet_diagnostic.CA1861.severity = none
