@@ -1,12 +1,15 @@
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Security;
 using OpsFlow.Domain.Identity;
+using OpsFlow.Application.Common.Exceptions;
 
 namespace OpsFlow.Application.Features.Identity.RegisterUser;
 
 public sealed class RegisterUserHandler(
     IUserRepository userRepository,
-    IPasswordHasher passwordHasher)
+    IUserCredentialRepository userCredentialRepository,
+    IPasswordHasher passwordHasher,
+    IUnitOfWork unitOfWork)
 {
     public async Task<RegisterUserResult> HandleAsync(
         RegisterUserCommand command,
@@ -15,10 +18,12 @@ public sealed class RegisterUserHandler(
         ArgumentNullException.ThrowIfNull(command);
 
         var email = command.Email.Trim();
+        var firstName = command.FirstName.Trim();
+        var lastName = command.LastName.Trim();
 
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
-        ArgumentException.ThrowIfNullOrWhiteSpace(command.FirstName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(command.LastName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(firstName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(lastName);
         ArgumentException.ThrowIfNullOrWhiteSpace(command.Password);
 
         var normalizedEmail = email.ToUpperInvariant();
@@ -30,22 +35,30 @@ public sealed class RegisterUserHandler(
 
         if (existingUser is not null)
         {
-            throw new InvalidOperationException(
+            throw new ConflictException(
                 "A user with this email already exists.");
         }
 
-        var passwordHash = passwordHasher.Hash(command.Password);
-
         var user = User.Create(
             email,
-            command.FirstName,
-            command.LastName);
+            firstName,
+            lastName);
 
-        // Password persistence will be introduced into the
-        // authentication model before completing this slice.
+        var passwordHash = passwordHasher.Hash(command.Password);
+
+        var credential = UserCredential.Create(
+            user.Id,
+            passwordHash);
 
         await userRepository.AddAsync(
             user,
+            cancellationToken);
+
+        await userCredentialRepository.AddAsync(
+            credential,
+            cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(
             cancellationToken);
 
         return new RegisterUserResult(

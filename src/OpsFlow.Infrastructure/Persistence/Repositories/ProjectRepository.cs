@@ -1,0 +1,34 @@
+using Microsoft.EntityFrameworkCore;
+using OpsFlow.Application.Abstractions.Persistence;
+using OpsFlow.Domain.Projects;
+
+namespace OpsFlow.Infrastructure.Persistence.Repositories;
+
+public sealed class ProjectRepository(
+    OpsFlowDbContext dbContext) : IProjectRepository
+{
+    public Task<bool> ExistsByKeyAsync(
+        Guid organizationId,
+        string key,
+        CancellationToken cancellationToken)
+        => dbContext.Projects.AnyAsync(
+            project =>
+                project.OrganizationId == organizationId &&
+                project.Key == key,
+            cancellationToken);
+    public Task<Project?> GetByIdAsync(
+           Guid organizationId,
+           Guid projectId,
+           CancellationToken cancellationToken)
+           => dbContext.Projects.SingleOrDefaultAsync(
+               project =>
+                   project.Id == projectId &&
+                   project.OrganizationId == organizationId,
+               cancellationToken);
+    public async Task AddAsync(
+        Project project,
+        CancellationToken cancellationToken)
+        => await dbContext.Projects.AddAsync(
+            project,
+            cancellationToken);
+}

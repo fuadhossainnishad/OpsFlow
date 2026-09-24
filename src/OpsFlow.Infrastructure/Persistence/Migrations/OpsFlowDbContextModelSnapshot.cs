@@ -73,6 +73,50 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("UX_Roles_NormalizedName");
 
                     b.ToTable("Roles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            IsSystemRole = true,
+                            Name = "Owner",
+                            NormalizedName = "OWNER"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            IsSystemRole = true,
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
+                            IsSystemRole = true,
+                            Name = "Project Manager",
+                            NormalizedName = "PROJECT_MANAGER"
+                        },
+                        new
+                        {
+                            Id = new Guid("44444444-4444-4444-4444-444444444444"),
+                            IsSystemRole = true,
+                            Name = "Team Lead",
+                            NormalizedName = "TEAM_LEAD"
+                        },
+                        new
+                        {
+                            Id = new Guid("55555555-5555-5555-5555-555555555555"),
+                            IsSystemRole = true,
+                            Name = "Member",
+                            NormalizedName = "MEMBER"
+                        },
+                        new
+                        {
+                            Id = new Guid("66666666-6666-6666-6666-666666666666"),
+                            IsSystemRole = true,
+                            Name = "Viewer",
+                            NormalizedName = "VIEWER"
+                        });
                 });
 
             modelBuilder.Entity("OpsFlow.Domain.Authorization.RolePermission", b =>
@@ -88,6 +132,38 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                     b.HasIndex("PermissionId");
 
                     b.ToTable("RolePermissions", (string)null);
+                });
+
+            modelBuilder.Entity("OpsFlow.Domain.Identity.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ExpiresAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("RevokedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ExpiresAtUtc");
+
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("OpsFlow.Domain.Identity.User", b =>
@@ -129,6 +205,30 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("UX_Users_NormalizedEmail");
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("OpsFlow.Domain.Identity.UserCredential", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("PasswordChangedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("UserCredentials", (string)null);
                 });
 
             modelBuilder.Entity("OpsFlow.Domain.Organizations.Membership", b =>
@@ -199,6 +299,98 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("Organizations", (string)null);
                 });
 
+            modelBuilder.Entity("OpsFlow.Domain.Projects.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("IX_Projects_Organization");
+
+                    b.HasIndex("OrganizationId", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Projects_Organization_Key");
+
+                    b.ToTable("Projects", (string)null);
+                });
+
+            modelBuilder.Entity("OpsFlow.Domain.Tasks.TaskItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssigneeUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(5000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssigneeUserId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("OrganizationId", "AssigneeUserId")
+                        .HasDatabaseName("IX_Tasks_Organization_Assignee");
+
+                    b.HasIndex("OrganizationId", "ProjectId")
+                        .HasDatabaseName("IX_Tasks_Organization_Project");
+
+                    b.HasIndex("OrganizationId", "Status")
+                        .HasDatabaseName("IX_Tasks_Organization_Status");
+
+                    b.ToTable("Tasks", (string)null);
+                });
+
             modelBuilder.Entity("OpsFlow.Domain.Authorization.RolePermission", b =>
                 {
                     b.HasOne("OpsFlow.Domain.Authorization.Permission", null)
@@ -210,6 +402,24 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                     b.HasOne("OpsFlow.Domain.Authorization.Role", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OpsFlow.Domain.Identity.RefreshToken", b =>
+                {
+                    b.HasOne("OpsFlow.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OpsFlow.Domain.Identity.UserCredential", b =>
+                {
+                    b.HasOne("OpsFlow.Domain.Identity.User", null)
+                        .WithOne()
+                        .HasForeignKey("OpsFlow.Domain.Identity.UserCredential", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -231,6 +441,35 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                     b.HasOne("OpsFlow.Domain.Identity.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OpsFlow.Domain.Projects.Project", b =>
+                {
+                    b.HasOne("OpsFlow.Domain.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OpsFlow.Domain.Tasks.TaskItem", b =>
+                {
+                    b.HasOne("OpsFlow.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("AssigneeUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("OpsFlow.Domain.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OpsFlow.Domain.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

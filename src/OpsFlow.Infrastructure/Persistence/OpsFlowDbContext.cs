@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using OpsFlow.Domain.Authorization;
 using OpsFlow.Domain.Identity;
 using OpsFlow.Domain.Organizations;
+using OpsFlow.Domain.Projects;
+using OpsFlow.Domain.Tasks;
 
 namespace OpsFlow.Infrastructure.Persistence;
 
@@ -20,6 +22,14 @@ public sealed class OpsFlowDbContext(
     public DbSet<Permission> Permissions => Set<Permission>();
 
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
+    public DbSet<UserCredential> UserCredentials => Set<UserCredential>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<Project> Projects => Set<Project>();
+
+    public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
