@@ -17,6 +17,8 @@ public sealed class OpsFlowDbContext(
 
     public DbSet<Membership> Memberships => Set<Membership>();
 
+    public DbSet<OrganizationInvitation> OrganizationInvitations => Set<OrganizationInvitation>();
+
     public DbSet<Role> Roles => Set<Role>();
 
     public DbSet<Permission> Permissions => Set<Permission>();

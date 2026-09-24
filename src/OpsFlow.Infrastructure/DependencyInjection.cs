@@ -16,6 +16,12 @@ using OpsFlow.Application.Features.Tasks.GetTask;
 using OpsFlow.Application.Features.Tasks.UpdateTask;
 using OpsFlow.Application.Features.Tasks.AssignTask;
 using OpsFlow.Application.Features.Tasks.ChangeTaskStatus;
+using OpsFlow.Application.Features.Members.InviteMember;
+using OpsFlow.Application.Features.Members.AcceptInvitation;
+using OpsFlow.Application.Features.Members.ListMembers;
+using OpsFlow.Application.Features.Members.ChangeMemberRole;
+using OpsFlow.Application.Features.Members.DeactivateMember;
+using OpsFlow.Application.Features.Members.ReactivateMember;
 
 namespace OpsFlow.Infrastructure;
 
@@ -42,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 
         services.AddScoped<IMembershipRepository, MembershipRepository>();
+        services.AddScoped<IOrganizationInvitationRepository, OrganizationInvitationRepository>();
 
         services.AddScoped<IRoleRepository, RoleRepository>();
 
@@ -56,6 +63,12 @@ public static class DependencyInjection
         services.AddScoped<UpdateTaskHandler>();
         services.AddScoped<AssignTaskHandler>();
         services.AddScoped<ChangeTaskStatusHandler>();
+        services.AddScoped<InviteMemberHandler>();
+        services.AddScoped<AcceptInvitationHandler>();
+        services.AddScoped<ListMembersHandler>();
+        services.AddScoped<ChangeMemberRoleHandler>();
+        services.AddScoped<DeactivateMemberHandler>();
+        services.AddScoped<ReactivateMemberHandler>();
         services.AddScoped<IPermissionChecker, PermissionChecker>();
         return services;
     }
