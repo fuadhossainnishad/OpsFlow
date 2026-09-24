@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OpsFlow.Application.Features.Tasks.CreateTask;
-using OpsFlow.Application.Features.Tasks.GetTask;
 using OpsFlow.Api.Contracts.Tasks;
 using OpsFlow.Application.Authorization;
+using OpsFlow.Application.Features.Tasks.AssignTask;
+using OpsFlow.Application.Features.Tasks.ChangeTaskStatus;
+using OpsFlow.Application.Features.Tasks.CreateTask;
+using OpsFlow.Application.Features.Tasks.GetTask;
+using OpsFlow.Application.Features.Tasks.UpdateTask;
 
 namespace OpsFlow.Api.Controllers;
 
@@ -12,55 +15,52 @@ namespace OpsFlow.Api.Controllers;
 [Authorize]
 public sealed class TasksController(
     CreateTaskHandler createTaskHandler,
-    GetTaskHandler getTaskHandler) : ControllerBase
+    GetTaskHandler getTaskHandler,
+    UpdateTaskHandler updateTaskHandler,
+    AssignTaskHandler assignTaskHandler,
+    ChangeTaskStatusHandler changeTaskStatusHandler) : ControllerBase
 {
-    [Authorize(Policy = PermissionCodes.TasksCreate)]
     [HttpPost]
+    [Authorize(Policy = PermissionCodes.TasksCreate)]
     [ProducesResponseType(typeof(CreateTaskResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CreateTaskResponse>> Create(
         CreateTaskRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new CreateTaskCommand(
-            request.ProjectId,
-            request.Title,
-            request.Description,
-            request.AssigneeUserId);
-
         var result = await createTaskHandler.HandleAsync(
-            command,
+            new CreateTaskCommand(
+                request.ProjectId,
+                request.Title,
+                request.Description,
+                request.AssigneeUserId),
             cancellationToken);
-
-        var response = new CreateTaskResponse(
-            result.TaskId,
-            result.OrganizationId,
-            result.ProjectId,
-            result.Title,
-            result.Description,
-            result.AssigneeUserId,
-            result.Status);
 
         return CreatedAtAction(
             nameof(Get),
             new { taskId = result.TaskId },
-            response);
+            new CreateTaskResponse(
+                result.TaskId,
+                result.OrganizationId,
+                result.ProjectId,
+                result.Title,
+                result.Description,
+                result.AssigneeUserId,
+                result.Status,
+                result.RowVersion));
     }
-    [Authorize(Policy = PermissionCodes.TasksRead)]
+
     [HttpGet("{taskId:guid}")]
+    [Authorize(Policy = PermissionCodes.TasksRead)]
     [ProducesResponseType(typeof(GetTaskResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GetTaskResponse>> Get(
-            Guid taskId,
-            CancellationToken cancellationToken)
+        Guid taskId,
+        CancellationToken cancellationToken)
     {
         var result = await getTaskHandler.HandleAsync(
             new GetTaskQuery(taskId),
             cancellationToken);
 
-        var response = new GetTaskResponse(
+        return Ok(new GetTaskResponse(
             result.TaskId,
             result.OrganizationId,
             result.ProjectId,
@@ -69,8 +69,84 @@ public sealed class TasksController(
             result.AssigneeUserId,
             result.Status,
             result.CreatedAtUtc,
-            result.UpdatedAtUtc);
+            result.UpdatedAtUtc,
+            result.RowVersion));
+    }
 
-        return Ok(response);
+    [HttpPatch("{taskId:guid}")]
+    [Authorize(Policy = PermissionCodes.TasksUpdate)]
+    [ProducesResponseType(typeof(UpdateTaskResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<UpdateTaskResponse>> Update(
+        Guid taskId,
+        UpdateTaskRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await updateTaskHandler.HandleAsync(
+            new UpdateTaskCommand(
+                taskId,
+                request.Title,
+                request.Description,
+                request.RowVersion),
+            cancellationToken);
+
+        return Ok(new UpdateTaskResponse(
+            result.TaskId,
+            result.OrganizationId,
+            result.ProjectId,
+            result.Title,
+            result.Description,
+            result.AssigneeUserId,
+            result.Status,
+            result.CreatedAtUtc,
+            result.UpdatedAtUtc,
+            result.RowVersion));
+    }
+
+    [HttpPut("{taskId:guid}/assignee")]
+    [Authorize(Policy = PermissionCodes.TasksAssign)]
+    [ProducesResponseType(typeof(AssignTaskResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<AssignTaskResponse>> Assign(
+        Guid taskId,
+        AssignTaskRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await assignTaskHandler.HandleAsync(
+            new AssignTaskCommand(
+                taskId,
+                request.AssigneeUserId,
+                request.RowVersion),
+            cancellationToken);
+
+        return Ok(new AssignTaskResponse(
+            result.TaskId,
+            result.OrganizationId,
+            result.AssigneeUserId,
+            result.Status,
+            result.RowVersion));
+    }
+
+    [HttpPut("{taskId:guid}/status")]
+    [Authorize(Policy = PermissionCodes.TasksUpdate)]
+    [ProducesResponseType(typeof(ChangeTaskStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ChangeTaskStatusResponse>> ChangeStatus(
+        Guid taskId,
+        ChangeTaskStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await changeTaskStatusHandler.HandleAsync(
+            new ChangeTaskStatusCommand(
+                taskId,
+                request.Status,
+                request.RowVersion),
+            cancellationToken);
+
+        return Ok(new ChangeTaskStatusResponse(
+            result.TaskId,
+            result.OrganizationId,
+            result.Status,
+            result.RowVersion));
     }
 }

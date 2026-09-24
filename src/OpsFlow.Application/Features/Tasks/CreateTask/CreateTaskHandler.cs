@@ -51,6 +51,7 @@ public sealed class CreateTaskHandler(
             task.Title,
             task.Description,
             task.AssigneeUserId,
-            task.Status);
+            task.Status,
+            Convert.ToBase64String(task.RowVersion));
     }
 }

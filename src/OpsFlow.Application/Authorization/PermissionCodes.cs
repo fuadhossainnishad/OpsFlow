@@ -25,6 +25,7 @@ public static class PermissionCodes
     public static IReadOnlyCollection<string> All =>
     [
         OrganizationsRead,
+        OrganizationsCreate,
         OrganizationsUpdate,
         MembersRead,
         MembersInvite,

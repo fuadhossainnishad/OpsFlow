@@ -3,6 +3,7 @@ namespace OpsFlow.Domain.Authorization;
 public static class PermissionIds
 {
     public static readonly Guid OrganizationsRead = Guid.Parse("71000000-0000-0000-0000-000000000001");
+    public static readonly Guid OrganizationsCreate = Guid.Parse("71000000-0000-0000-0000-000000000015");
     public static readonly Guid OrganizationsUpdate = Guid.Parse("71000000-0000-0000-0000-000000000002");
     public static readonly Guid MembersRead = Guid.Parse("71000000-0000-0000-0000-000000000003");
     public static readonly Guid MembersInvite = Guid.Parse("71000000-0000-0000-0000-000000000004");

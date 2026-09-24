@@ -34,6 +34,12 @@ public sealed class PermissionConfiguration
             },
             new
             {
+                Id = PermissionIds.OrganizationsCreate,
+                Code = "organizations.create",
+                Name = "Create organizations"
+            },
+            new
+            {
                 Id = PermissionIds.OrganizationsUpdate,
                 Code = "organizations.update",
                 Name = "Update organizations"

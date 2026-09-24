@@ -1,6 +1,8 @@
-namespace OpsFlow.Application.Features.Tasks.CreateTask;
+using OpsFlow.Domain.Tasks;
 
-public sealed record CreateTaskResult(
+namespace OpsFlow.Api.Contracts.Tasks;
+
+public sealed record UpdateTaskResponse(
     Guid TaskId,
     Guid OrganizationId,
     Guid ProjectId,
@@ -8,4 +10,6 @@ public sealed record CreateTaskResult(
     string? Description,
     Guid? AssigneeUserId,
     OpsFlow.Domain.Tasks.TaskStatus Status,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? UpdatedAtUtc,
     string RowVersion);

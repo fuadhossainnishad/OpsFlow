@@ -36,6 +36,10 @@ public sealed class TaskItemConfiguration
 
         builder.Property(task => task.UpdatedAtUtc);
 
+        builder.Property(task => task.RowVersion)
+            .IsRowVersion()
+            .IsConcurrencyToken();
+
         builder.HasIndex(task => new
         {
             task.OrganizationId,

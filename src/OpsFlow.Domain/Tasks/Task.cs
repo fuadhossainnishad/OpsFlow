@@ -38,6 +38,8 @@ public sealed class TaskItem : Entity
 
     public DateTimeOffset? UpdatedAtUtc { get; private set; }
 
+    public byte[] RowVersion { get; private set; } = [];
+
     public static TaskItem Create(
         Guid organizationId,
         Guid projectId,
@@ -96,6 +98,34 @@ public sealed class TaskItem : Entity
 
     public void ChangeStatus(TaskStatus status)
     {
+        if (Status == status)
+        {
+            return;
+        }
+
+        var isAllowed = Status switch
+        {
+            TaskStatus.Todo =>
+                status is TaskStatus.InProgress or TaskStatus.Cancelled,
+
+            TaskStatus.InProgress =>
+                status is TaskStatus.Todo or TaskStatus.Done or TaskStatus.Cancelled,
+
+            TaskStatus.Done =>
+                status is TaskStatus.InProgress,
+
+            TaskStatus.Cancelled =>
+                status is TaskStatus.Todo,
+
+            _ => false
+        };
+
+        if (!isAllowed)
+        {
+            throw new InvalidOperationException(
+                $"Task cannot transition from {Status} to {status}.");
+        }
+
         Status = status;
         Touch();
     }

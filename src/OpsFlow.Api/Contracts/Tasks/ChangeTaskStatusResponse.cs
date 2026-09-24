@@ -2,12 +2,8 @@ using OpsFlow.Domain.Tasks;
 
 namespace OpsFlow.Api.Contracts.Tasks;
 
-public sealed record CreateTaskResponse(
+public sealed record ChangeTaskStatusResponse(
     Guid TaskId,
     Guid OrganizationId,
-    Guid ProjectId,
-    string Title,
-    string? Description,
-    Guid? AssigneeUserId,
     OpsFlow.Domain.Tasks.TaskStatus Status,
     string RowVersion);

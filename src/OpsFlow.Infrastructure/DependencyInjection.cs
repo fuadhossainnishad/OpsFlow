@@ -13,6 +13,9 @@ using OpsFlow.Application.Features.Projects.CreateProject;
 using OpsFlow.Application.Features.Tasks.CreateTask;
 using OpsFlow.Application.Abstractions.Authorization;
 using OpsFlow.Application.Features.Tasks.GetTask;
+using OpsFlow.Application.Features.Tasks.UpdateTask;
+using OpsFlow.Application.Features.Tasks.AssignTask;
+using OpsFlow.Application.Features.Tasks.ChangeTaskStatus;
 
 namespace OpsFlow.Infrastructure;
 
@@ -50,6 +53,9 @@ public static class DependencyInjection
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<CreateTaskHandler>();
         services.AddScoped<GetTaskHandler>();
+        services.AddScoped<UpdateTaskHandler>();
+        services.AddScoped<AssignTaskHandler>();
+        services.AddScoped<ChangeTaskStatusHandler>();
         services.AddScoped<IPermissionChecker, PermissionChecker>();
         return services;
     }

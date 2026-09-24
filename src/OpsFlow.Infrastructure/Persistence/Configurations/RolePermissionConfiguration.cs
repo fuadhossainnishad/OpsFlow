@@ -29,6 +29,7 @@ public sealed class RolePermissionConfiguration
 
         builder.HasData(
             Owner(PermissionIds.OrganizationsRead),
+            Owner(PermissionIds.OrganizationsCreate),
             Owner(PermissionIds.OrganizationsUpdate),
             Owner(PermissionIds.MembersRead),
             Owner(PermissionIds.MembersInvite),
@@ -44,6 +45,7 @@ public sealed class RolePermissionConfiguration
             Owner(PermissionIds.BillingManage),
 
             Admin(PermissionIds.OrganizationsRead),
+            Admin(PermissionIds.OrganizationsCreate),
             Admin(PermissionIds.OrganizationsUpdate),
             Admin(PermissionIds.MembersRead),
             Admin(PermissionIds.MembersInvite),

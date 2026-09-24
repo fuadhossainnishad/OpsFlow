@@ -9,4 +9,5 @@ public sealed record GetTaskResult(
     Guid? AssigneeUserId,
     OpsFlow.Domain.Tasks.TaskStatus Status,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? UpdatedAtUtc);
+    DateTimeOffset? UpdatedAtUtc,
+    string RowVersion);

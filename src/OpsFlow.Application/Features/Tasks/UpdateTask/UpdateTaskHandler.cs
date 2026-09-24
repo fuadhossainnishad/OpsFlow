@@ -1,22 +1,27 @@
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Application.Common.Exceptions;
+using OpsFlow.Application.Features.Tasks.Common;
 
-namespace OpsFlow.Application.Features.Tasks.GetTask;
+namespace OpsFlow.Application.Features.Tasks.UpdateTask;
 
-public sealed class GetTaskHandler(
+public sealed class UpdateTaskHandler(
     ITenantContext tenantContext,
-    ITaskRepository taskRepository)
+    ITaskRepository taskRepository,
+    IUnitOfWork unitOfWork)
 {
-    public async Task<GetTaskResult> HandleAsync(
-        GetTaskQuery query,
+    public async Task<UpdateTaskResult> HandleAsync(
+        UpdateTaskCommand command,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(command);
+
+        var organizationId = await tenantContext.GetOrganizationIdAsync(
+            cancellationToken);
 
         var task = await taskRepository.GetByIdAsync(
-            await tenantContext.GetOrganizationIdAsync(cancellationToken),
-            query.TaskId,
+            organizationId,
+            command.TaskId,
             cancellationToken);
 
         if (task is null)
@@ -24,7 +29,13 @@ public sealed class GetTaskHandler(
             throw new NotFoundException("Task was not found.");
         }
 
-        return new GetTaskResult(
+        TaskConcurrency.EnsureCurrent(task, command.RowVersion);
+
+        task.Update(command.Title, command.Description);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new UpdateTaskResult(
             task.Id,
             task.OrganizationId,
             task.ProjectId,
