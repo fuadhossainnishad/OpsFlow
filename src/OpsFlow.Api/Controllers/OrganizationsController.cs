@@ -2,15 +2,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OpsFlow.Api.Contracts.Organizations;
 using OpsFlow.Application.Features.Organizations.CreateOrganization;
+using OpsFlow.Application.Authorization;
 
 namespace OpsFlow.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/organizations")]
-[Authorize]
 public sealed class OrganizationsController(
     CreateOrganizationHandler createOrganizationHandler) : ControllerBase
 {
+    [Authorize(Policy = PermissionCodes.OrganizationsCreate)]
     [HttpPost]
     [ProducesResponseType(
         typeof(CreateOrganizationResponse),

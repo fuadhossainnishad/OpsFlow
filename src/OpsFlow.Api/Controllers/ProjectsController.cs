@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OpsFlow.Api.Contracts.Projects;
+using OpsFlow.Application.Authorization;
 using OpsFlow.Application.Features.Projects.CreateProject;
 
 namespace OpsFlow.Api.Controllers;
@@ -11,6 +12,7 @@ namespace OpsFlow.Api.Controllers;
 public sealed class ProjectsController(
     CreateProjectHandler createProjectHandler) : ControllerBase
 {
+    [Authorize(Policy = PermissionCodes.ProjectsCreate)]
     [HttpPost]
     [ProducesResponseType(
         typeof(CreateProjectResponse),

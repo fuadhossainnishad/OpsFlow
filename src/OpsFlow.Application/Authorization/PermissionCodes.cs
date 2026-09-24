@@ -4,6 +4,7 @@ public static class PermissionCodes
 {
     public const string OrganizationsRead = "organizations.read";
     public const string OrganizationsUpdate = "organizations.update";
+    public const string OrganizationsCreate = "organizations.create";
 
     public const string MembersRead = "members.read";
     public const string MembersInvite = "members.invite";

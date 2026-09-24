@@ -15,23 +15,19 @@ public sealed class PermissionAuthorizationHandler(
         AuthorizationHandlerContext context,
         PermissionRequirement requirement)
     {
-        if (!context.User.Identity?.IsAuthenticated ?? true)
+        if (context.User.Identity?.IsAuthenticated != true)
         {
             return;
         }
 
         var organizationId = await tenantContext.GetOrganizationIdAsync(
-            context.Resource is HttpContext httpContext
-                ? httpContext.RequestAborted
-                : CancellationToken.None);
+            CancellationToken.None);
 
         var hasPermission = await permissionChecker.HasPermissionAsync(
             currentUser.UserId,
             organizationId,
             requirement.PermissionCode,
-            context.Resource is HttpContext requestContext
-                ? requestContext.RequestAborted
-                : CancellationToken.None);
+            CancellationToken.None);
 
         if (hasPermission)
         {
