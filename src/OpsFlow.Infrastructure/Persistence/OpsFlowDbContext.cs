@@ -4,7 +4,7 @@ using OpsFlow.Domain.Identity;
 using OpsFlow.Domain.Organizations;
 using OpsFlow.Domain.Projects;
 using OpsFlow.Domain.Tasks;
-
+using OpsFlow.Domain.Teams;
 namespace OpsFlow.Infrastructure.Persistence;
 
 public sealed class OpsFlowDbContext(
@@ -32,6 +32,8 @@ public sealed class OpsFlowDbContext(
     public DbSet<Project> Projects => Set<Project>();
 
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
+    public DbSet<Team> Teams => Set<Team>();
+    public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

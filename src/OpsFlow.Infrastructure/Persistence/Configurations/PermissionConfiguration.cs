@@ -115,6 +115,30 @@ public sealed class PermissionConfiguration
                 Id = PermissionIds.BillingManage,
                 Code = "billing.manage",
                 Name = "Manage billing"
-            });
+            }, new
+            {
+                Id = PermissionIds.TeamsRead,
+                Code = "teams.read",
+                Name = "Read teams"
+            },
+            new
+            {
+                Id = PermissionIds.TeamsCreate,
+                Code = "teams.create",
+                Name = "Create teams"
+            },
+            new
+            {
+                Id = PermissionIds.TeamsUpdate,
+                Code = "teams.update",
+                Name = "Update teams"
+            },
+            new
+            {
+                Id = PermissionIds.TeamsManageMembers,
+                Code = "teams.manage_members",
+                Name = "Manage team members"
+            }
+            );
     }
 }

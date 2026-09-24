@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpsFlow.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using OpsFlow.Infrastructure.Persistence;
 namespace OpsFlow.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(OpsFlowDbContext))]
-    partial class OpsFlowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260924185632_AddTeams")]
+    partial class AddTeams
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -136,30 +139,6 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                             Id = new Guid("71000000-0000-0000-0000-000000000014"),
                             Code = "billing.manage",
                             Name = "Manage billing"
-                        },
-                        new
-                        {
-                            Id = new Guid("71000000-0000-0000-0000-000000000016"),
-                            Code = "teams.read",
-                            Name = "Read teams"
-                        },
-                        new
-                        {
-                            Id = new Guid("71000000-0000-0000-0000-000000000017"),
-                            Code = "teams.create",
-                            Name = "Create teams"
-                        },
-                        new
-                        {
-                            Id = new Guid("71000000-0000-0000-0000-000000000018"),
-                            Code = "teams.update",
-                            Name = "Update teams"
-                        },
-                        new
-                        {
-                            Id = new Guid("71000000-0000-0000-0000-000000000019"),
-                            Code = "teams.manage_members",
-                            Name = "Manage team members"
                         });
                 });
 
@@ -327,26 +306,6 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
-                            RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000016")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000017")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000018")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000019")
-                        },
-                        new
-                        {
                             RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
                             PermissionId = new Guid("71000000-0000-0000-0000-000000000001")
                         },
@@ -417,26 +376,6 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
-                            RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000016")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000017")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000018")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000019")
-                        },
-                        new
-                        {
                             RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PermissionId = new Guid("71000000-0000-0000-0000-000000000001")
                         },
@@ -487,26 +426,6 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
-                            RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000016")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000017")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000018")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000019")
-                        },
-                        new
-                        {
                             RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PermissionId = new Guid("71000000-0000-0000-0000-000000000001")
                         },
@@ -542,21 +461,6 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
-                            RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000016")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000018")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000019")
-                        },
-                        new
-                        {
                             RoleId = new Guid("55555555-5555-5555-5555-555555555555"),
                             PermissionId = new Guid("71000000-0000-0000-0000-000000000001")
                         },
@@ -579,16 +483,6 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                         {
                             RoleId = new Guid("55555555-5555-5555-5555-555555555555"),
                             PermissionId = new Guid("71000000-0000-0000-0000-000000000011")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("55555555-5555-5555-5555-555555555555"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000016")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            PermissionId = new Guid("71000000-0000-0000-0000-000000000016")
                         },
                         new
                         {

@@ -22,6 +22,11 @@ public static class PermissionCodes
     public const string ReportsRead = "reports.read";
     public const string BillingManage = "billing.manage";
 
+    public const string TeamsRead = "teams.read";
+    public const string TeamsCreate = "teams.create";
+    public const string TeamsUpdate = "teams.update";
+    public const string TeamsManageMembers = "teams.manage_members";
+
     public static IReadOnlyCollection<string> All =>
     [
         OrganizationsRead,

@@ -22,6 +22,15 @@ using OpsFlow.Application.Features.Members.ListMembers;
 using OpsFlow.Application.Features.Members.ChangeMemberRole;
 using OpsFlow.Application.Features.Members.DeactivateMember;
 using OpsFlow.Application.Features.Members.ReactivateMember;
+using OpsFlow.Application.Features.Teams;
+using OpsFlow.Application.Features.Teams.AddTeamMember;
+using OpsFlow.Application.Features.Teams.ArchiveTeam;
+using OpsFlow.Application.Features.Teams.ChangeTeamLead;
+using OpsFlow.Application.Features.Teams.CreateTeam;
+using OpsFlow.Application.Features.Teams.GetTeam;
+using OpsFlow.Application.Features.Teams.ListTeams;
+using OpsFlow.Application.Features.Teams.RemoveTeamMember;
+using OpsFlow.Application.Features.Teams.UpdateTeam;
 
 namespace OpsFlow.Infrastructure;
 
@@ -70,6 +79,15 @@ public static class DependencyInjection
         services.AddScoped<DeactivateMemberHandler>();
         services.AddScoped<ReactivateMemberHandler>();
         services.AddScoped<IPermissionChecker, PermissionChecker>();
+        services.AddScoped<ITeamRepository, TeamRepository>();
+        services.AddScoped<CreateTeamHandler>();
+        services.AddScoped<ListTeamsHandler>();
+        services.AddScoped<GetTeamHandler>();
+        services.AddScoped<UpdateTeamHandler>();
+        services.AddScoped<ArchiveTeamHandler>();
+        services.AddScoped<AddTeamMemberHandler>();
+        services.AddScoped<RemoveTeamMemberHandler>();
+        services.AddScoped<ChangeTeamLeadHandler>();
         return services;
     }
 }
