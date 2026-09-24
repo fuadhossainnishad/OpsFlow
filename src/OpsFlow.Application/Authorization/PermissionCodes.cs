@@ -1,0 +1,41 @@
+namespace OpsFlow.Application.Authorization;
+
+public static class PermissionCodes
+{
+    public const string OrganizationsRead = "organizations.read";
+    public const string OrganizationsUpdate = "organizations.update";
+
+    public const string MembersRead = "members.read";
+    public const string MembersInvite = "members.invite";
+    public const string MembersManage = "members.manage";
+
+    public const string ProjectsRead = "projects.read";
+    public const string ProjectsCreate = "projects.create";
+    public const string ProjectsUpdate = "projects.update";
+
+    public const string TasksRead = "tasks.read";
+    public const string TasksCreate = "tasks.create";
+    public const string TasksUpdate = "tasks.update";
+    public const string TasksAssign = "tasks.assign";
+
+    public const string ReportsRead = "reports.read";
+    public const string BillingManage = "billing.manage";
+
+    public static IReadOnlyCollection<string> All =>
+    [
+        OrganizationsRead,
+        OrganizationsUpdate,
+        MembersRead,
+        MembersInvite,
+        MembersManage,
+        ProjectsRead,
+        ProjectsCreate,
+        ProjectsUpdate,
+        TasksRead,
+        TasksCreate,
+        TasksUpdate,
+        TasksAssign,
+        ReportsRead,
+        BillingManage
+    ];
+}

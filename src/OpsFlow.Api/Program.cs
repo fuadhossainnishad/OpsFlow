@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
+using OpsFlow.Api.Authorization;
+using OpsFlow.Application.Abstractions.Authorization;
+using OpsFlow.Application.Authorization;
 using Microsoft.EntityFrameworkCore;
 using OpsFlow.Api.Errors;
 using OpsFlow.Infrastructure;
@@ -20,8 +24,7 @@ builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-builder.Services.AddInfrastructure(
-    builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration);
 
 
 builder.Services
@@ -55,11 +58,21 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
-
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in PermissionCodes.All)
+    {
+        options.AddPolicy(
+            permission,
+            policy => policy.Requirements.Add(
+                new PermissionRequirement(permission)));
+    }
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<IPermissionChecker, PermissionChecker>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddDbContext<OpsFlowDbContext>(options =>
 {
     var connectionString =

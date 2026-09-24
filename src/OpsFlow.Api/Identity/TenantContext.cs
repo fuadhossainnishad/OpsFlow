@@ -7,36 +7,48 @@ namespace OpsFlow.Api.Identity;
 
 public sealed class TenantContext(
     ICurrentUser currentUser,
-    OpsFlowDbContext dbContext) : ITenantContext
+    OpsFlowDbContext dbContext,
+    IHttpContextAccessor httpContextAccessor) : ITenantContext
 {
     private Guid? _organizationId;
 
-    public Guid OrganizationId
+    public async Task<Guid> GetOrganizationIdAsync(
+        CancellationToken cancellationToken)
     {
-        get
+        if (_organizationId.HasValue)
         {
-            if (_organizationId.HasValue)
-            {
-                return _organizationId.Value;
-            }
-
-            var organizationId = dbContext.Memberships
-                .AsNoTracking()
-                .Where(membership =>
-                    membership.UserId == currentUser.UserId &&
-                    membership.IsActive)
-                .Select(membership => membership.OrganizationId)
-                .FirstOrDefault();
-
-            if (organizationId == Guid.Empty)
-            {
-                throw new InvalidOperationException(
-                    "Authenticated user does not belong to an organization.");
-            }
-
-            _organizationId = organizationId;
-
-            return organizationId;
+            return _organizationId.Value;
         }
+
+        var headerValue = httpContextAccessor
+            .HttpContext?
+            .Request
+            .Headers["X-Organization-Id"]
+            .FirstOrDefault();
+
+        if (!Guid.TryParse(headerValue, out var organizationId))
+        {
+            throw new InvalidOperationException(
+                "A valid X-Organization-Id header is required.");
+        }
+
+        var hasMembership = await dbContext.Memberships
+            .AsNoTracking()
+            .AnyAsync(
+                membership =>
+                    membership.UserId == currentUser.UserId &&
+                    membership.OrganizationId == organizationId &&
+                    membership.IsActive,
+                cancellationToken);
+
+        if (!hasMembership)
+        {
+            throw new InvalidOperationException(
+                "Authenticated user does not belong to the selected organization.");
+        }
+
+        _organizationId = organizationId;
+
+        return organizationId;
     }
 }

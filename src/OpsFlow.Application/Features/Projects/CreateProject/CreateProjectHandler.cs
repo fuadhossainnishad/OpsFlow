@@ -22,7 +22,8 @@ public sealed class CreateProjectHandler(
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        var organizationId = tenantContext.OrganizationId;
+        var organizationId = await tenantContext.GetOrganizationIdAsync(
+            cancellationToken);
 
         var keyExists = await projectRepository.ExistsByKeyAsync(
             organizationId,
@@ -57,5 +58,5 @@ public sealed class CreateProjectHandler(
             project.Status.ToString());
     }
 
-    
+
 }

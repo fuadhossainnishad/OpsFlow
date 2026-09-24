@@ -2,5 +2,5 @@ namespace OpsFlow.Application.Abstractions.Tenancy;
 
 public interface ITenantContext
 {
-    Guid OrganizationId { get; }
+    Task<Guid> GetOrganizationIdAsync(CancellationToken cancellationToken);
 }

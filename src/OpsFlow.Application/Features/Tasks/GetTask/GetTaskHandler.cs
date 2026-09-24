@@ -15,7 +15,7 @@ public sealed class GetTaskHandler(
         ArgumentNullException.ThrowIfNull(query);
 
         var task = await taskRepository.GetByIdAsync(
-            tenantContext.OrganizationId,
+            await tenantContext.GetOrganizationIdAsync(cancellationToken),
             query.TaskId,
             cancellationToken);
 

@@ -17,7 +17,7 @@ public sealed class CreateTaskHandler(
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var organizationId = tenantContext.OrganizationId;
+        var organizationId = await tenantContext.GetOrganizationIdAsync(cancellationToken);
 
         var project = await projectRepository.GetByIdAsync(
             organizationId,
