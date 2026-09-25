@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Infrastructure.Persistence;
-using OpsFlow.Infrastructure.Persistence.Repositories;
 using OpsFlow.Application.Abstractions.Security;
 using OpsFlow.Infrastructure.Security;
 using OpsFlow.Application.Features.Identity.RegisterUser;
@@ -10,6 +8,10 @@ using Microsoft.Extensions.Configuration;
 using OpsFlow.Application.Features.Identity.Login;
 using OpsFlow.Application.Features.Organizations.CreateOrganization;
 using OpsFlow.Application.Features.Projects.CreateProject;
+using OpsFlow.Application.Features.Projects.ArchiveProject;
+using OpsFlow.Application.Features.Projects.UpdateProject;
+using OpsFlow.Application.Features.Projects.GetProject;
+using OpsFlow.Application.Features.Projects.ListProjects;
 using OpsFlow.Application.Features.Tasks.CreateTask;
 using OpsFlow.Application.Abstractions.Authorization;
 using OpsFlow.Application.Features.Tasks.GetTask;
@@ -31,6 +33,9 @@ using OpsFlow.Application.Features.Teams.GetTeam;
 using OpsFlow.Application.Features.Teams.ListTeams;
 using OpsFlow.Application.Features.Teams.RemoveTeamMember;
 using OpsFlow.Application.Features.Teams.UpdateTeam;
+using OpsFlow.Infrastructure.Persistence.Repositories;
+using OpsFlow.Application.Features.Projects;
+using OpsFlow.Application.Abstractions.Persistence;
 
 namespace OpsFlow.Infrastructure;
 
@@ -65,7 +70,10 @@ public static class DependencyInjection
 
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<CreateProjectHandler>();
-
+        services.AddScoped<ListProjectsHandler>();
+        services.AddScoped<GetProjectHandler>();
+        services.AddScoped<UpdateProjectHandler>();
+        services.AddScoped<ArchiveProjectHandler>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<CreateTaskHandler>();
         services.AddScoped<GetTaskHandler>();

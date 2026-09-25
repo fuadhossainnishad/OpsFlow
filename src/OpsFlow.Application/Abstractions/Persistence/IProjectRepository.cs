@@ -16,4 +16,8 @@ public interface IProjectRepository
     Task AddAsync(
         Project project,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<Project>> GetAllAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken);
 }
