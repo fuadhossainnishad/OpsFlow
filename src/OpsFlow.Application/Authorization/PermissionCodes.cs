@@ -27,6 +27,11 @@ public static class PermissionCodes
     public const string TeamsUpdate = "teams.update";
     public const string TeamsManageMembers = "teams.manage_members";
 
+    public const string TimeEntriesRead = "time_entries.read";
+    public const string TimeEntriesCreate = "time_entries.create";
+    public const string TimeEntriesUpdate = "time_entries.update";
+    public const string TimeEntriesDelete = "time_entries.delete";
+
     public static IReadOnlyCollection<string> All =>
     [
         OrganizationsRead,
@@ -47,6 +52,10 @@ public static class PermissionCodes
         TeamsRead,
         TeamsCreate,
         TeamsUpdate,
-        TeamsManageMembers
+        TeamsManageMembers,
+        TimeEntriesRead,
+        TimeEntriesCreate,
+        TimeEntriesUpdate,
+        TimeEntriesDelete
     ];
 }

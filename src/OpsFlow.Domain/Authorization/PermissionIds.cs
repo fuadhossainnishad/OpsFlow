@@ -21,4 +21,8 @@ public static class PermissionIds
     public static readonly Guid TeamsCreate = Guid.Parse("71000000-0000-0000-0000-000000000017");
     public static readonly Guid TeamsUpdate = Guid.Parse("71000000-0000-0000-0000-000000000018");
     public static readonly Guid TeamsManageMembers = Guid.Parse("71000000-0000-0000-0000-000000000019");
+    public static readonly Guid TimeEntriesRead = Guid.Parse("71000000-0000-0000-0000-000000000020");
+    public static readonly Guid TimeEntriesCreate = Guid.Parse("71000000-0000-0000-0000-000000000021");
+    public static readonly Guid TimeEntriesUpdate = Guid.Parse("71000000-0000-0000-0000-000000000022");
+    public static readonly Guid TimeEntriesDelete = Guid.Parse("71000000-0000-0000-0000-000000000023");
 }

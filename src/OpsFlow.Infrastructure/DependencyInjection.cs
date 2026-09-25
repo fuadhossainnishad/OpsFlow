@@ -40,6 +40,12 @@ using OpsFlow.Application.Features.Projects;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Auditing;
 using OpsFlow.Infrastructure.Auditing;
+using OpsFlow.Application.Features.TimeTracking;
+using OpsFlow.Application.Features.TimeTracking.CreateTimeEntry;
+using OpsFlow.Application.Features.TimeTracking.DeleteTimeEntry;
+using OpsFlow.Application.Features.TimeTracking.GetTimeEntry;
+using OpsFlow.Application.Features.TimeTracking.ListTimeEntries;
+using OpsFlow.Application.Features.TimeTracking.UpdateTimeEntry;
 
 namespace OpsFlow.Infrastructure;
 
@@ -100,6 +106,13 @@ public static class DependencyInjection
         services.AddScoped<AddTeamMemberHandler>();
         services.AddScoped<RemoveTeamMemberHandler>();
         services.AddScoped<ChangeTeamLeadHandler>();
+
+        services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
+        services.AddScoped<CreateTimeEntryHandler>();
+        services.AddScoped<ListTimeEntriesHandler>();
+        services.AddScoped<GetTimeEntryHandler>();
+        services.AddScoped<UpdateTimeEntryHandler>();
+        services.AddScoped<DeleteTimeEntryHandler>();
 
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IAuditLogger, AuditLogger>();

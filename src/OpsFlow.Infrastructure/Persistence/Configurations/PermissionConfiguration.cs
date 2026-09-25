@@ -138,6 +138,30 @@ public sealed class PermissionConfiguration
                 Id = PermissionIds.TeamsManageMembers,
                 Code = "teams.manage_members",
                 Name = "Manage team members"
+            },
+            new
+            {
+                Id = PermissionIds.TimeEntriesRead,
+                Code = "time_entries.read",
+                Name = "Read time entries"
+            },
+            new
+            {
+                Id = PermissionIds.TimeEntriesCreate,
+                Code = "time_entries.create",
+                Name = "Create time entries"
+            },
+            new
+            {
+                Id = PermissionIds.TimeEntriesUpdate,
+                Code = "time_entries.update",
+                Name = "Update time entries"
+            },
+            new
+            {
+                Id = PermissionIds.TimeEntriesDelete,
+                Code = "time_entries.delete",
+                Name = "Delete time entries"
             }
             );
     }

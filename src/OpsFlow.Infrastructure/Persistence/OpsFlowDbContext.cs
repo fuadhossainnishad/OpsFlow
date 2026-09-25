@@ -5,6 +5,7 @@ using OpsFlow.Domain.Identity;
 using OpsFlow.Domain.Organizations;
 using OpsFlow.Domain.Projects;
 using OpsFlow.Domain.Tasks;
+using OpsFlow.Domain.TimeTracking;
 using OpsFlow.Domain.Teams;
 using OpsFlow.Domain.Messaging;
 namespace OpsFlow.Infrastructure.Persistence;
@@ -41,6 +42,8 @@ public sealed class OpsFlowDbContext(
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
