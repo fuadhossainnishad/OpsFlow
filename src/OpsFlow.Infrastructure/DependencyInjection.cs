@@ -36,6 +36,7 @@ using OpsFlow.Application.Features.Teams.UpdateTeam;
 using OpsFlow.Infrastructure.Persistence.Repositories;
 using OpsFlow.Application.Features.Projects;
 using OpsFlow.Application.Abstractions.Persistence;
+using OpsFlow.Application.Abstractions.Auditing;
 
 namespace OpsFlow.Infrastructure;
 
@@ -96,6 +97,9 @@ public static class DependencyInjection
         services.AddScoped<AddTeamMemberHandler>();
         services.AddScoped<RemoveTeamMemberHandler>();
         services.AddScoped<ChangeTeamLeadHandler>();
+
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+
         return services;
     }
 }

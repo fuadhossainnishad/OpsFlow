@@ -8,6 +8,7 @@ namespace OpsFlow.Application.Features.Tasks.CreateTask;
 public sealed class CreateTaskHandler(
     ITenantContext tenantContext,
     IProjectRepository projectRepository,
+    IMembershipRepository membershipRepository,
     ITaskRepository taskRepository,
     IUnitOfWork unitOfWork)
 {
@@ -17,7 +18,8 @@ public sealed class CreateTaskHandler(
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var organizationId = await tenantContext.GetOrganizationIdAsync(cancellationToken);
+        var organizationId = await tenantContext.GetOrganizationIdAsync(
+            cancellationToken);
 
         var project = await projectRepository.GetByIdAsync(
             organizationId,
@@ -26,8 +28,21 @@ public sealed class CreateTaskHandler(
 
         if (project is null)
         {
-            throw new NotFoundException(
-                "Project was not found.");
+            throw new NotFoundException("Project was not found.");
+        }
+
+        if (command.AssigneeUserId.HasValue)
+        {
+            var isActiveMember = await membershipRepository.IsActiveMemberAsync(
+                organizationId,
+                command.AssigneeUserId.Value,
+                cancellationToken);
+
+            if (!isActiveMember)
+            {
+                throw new ConflictException(
+                    "The assignee is not an active member of this organization.");
+            }
         }
 
         var task = TaskItem.Create(
@@ -37,12 +52,8 @@ public sealed class CreateTaskHandler(
             command.Description,
             command.AssigneeUserId);
 
-        await taskRepository.AddAsync(
-            task,
-            cancellationToken);
-
-        await unitOfWork.SaveChangesAsync(
-            cancellationToken);
+        await taskRepository.AddAsync(task, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new CreateTaskResult(
             task.Id,

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OpsFlow.Domain.Auditing;
 using OpsFlow.Domain.Authorization;
 using OpsFlow.Domain.Identity;
 using OpsFlow.Domain.Organizations;
@@ -12,6 +13,7 @@ public sealed class OpsFlowDbContext(
     : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     public DbSet<Organization> Organizations => Set<Organization>();
 
