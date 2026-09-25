@@ -9,6 +9,7 @@ using OpsFlow.Domain.Tasks;
 using OpsFlow.Domain.TimeTracking;
 using OpsFlow.Domain.Teams;
 using OpsFlow.Domain.Messaging;
+using OpsFlow.Domain.Notifications;
 namespace OpsFlow.Infrastructure.Persistence;
 
 public sealed class OpsFlowDbContext(
@@ -44,6 +45,7 @@ public sealed class OpsFlowDbContext(
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
 

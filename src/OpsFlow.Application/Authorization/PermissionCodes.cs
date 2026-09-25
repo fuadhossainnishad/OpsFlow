@@ -31,6 +31,7 @@ public static class PermissionCodes
     public const string TimeEntriesCreate = "time_entries.create";
     public const string TimeEntriesUpdate = "time_entries.update";
     public const string TimeEntriesDelete = "time_entries.delete";
+    public const string NotificationsRead = "notifications.read";
     public const string ApprovalsRead = "approvals.read";
     public const string ApprovalsCreate = "approvals.create";
     public const string ApprovalsApprove = "approvals.approve";
@@ -62,6 +63,7 @@ public static class PermissionCodes
         TimeEntriesCreate,
         TimeEntriesUpdate,
         TimeEntriesDelete,
+        NotificationsRead,
         ApprovalsRead,
         ApprovalsCreate,
         ApprovalsApprove,

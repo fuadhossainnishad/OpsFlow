@@ -85,4 +85,7 @@ public static class PermissionIds
 
     public static readonly Guid ApprovalsCancel =
         Guid.Parse("77777777-7777-7777-7777-777777777775");
+    
+    public static readonly Guid NotificationsRead =
+        Guid.Parse("77777777-7777-7777-7777-777777777776");
 }

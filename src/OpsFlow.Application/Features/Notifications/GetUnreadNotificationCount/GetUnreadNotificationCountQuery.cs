@@ -1,0 +1,3 @@
+namespace OpsFlow.Application.Features.Notifications.GetUnreadNotificationCount;
+
+public sealed record GetUnreadNotificationCountQuery;

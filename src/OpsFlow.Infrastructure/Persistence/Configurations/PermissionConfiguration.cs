@@ -162,6 +162,12 @@ public sealed class PermissionConfiguration
                 Id = PermissionIds.TimeEntriesDelete,
                 Code = "time_entries.delete",
                 Name = "Delete time entries"
+            },
+            new
+            {
+                Id = PermissionIds.NotificationsRead,
+                Code = "notifications.read",
+                Name = "Read notifications"
             }
             );
     }
