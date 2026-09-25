@@ -41,6 +41,13 @@ using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Auditing;
 using OpsFlow.Infrastructure.Auditing;
 using OpsFlow.Application.Features.TimeTracking;
+using OpsFlow.Application.Features.Approvals;
+using OpsFlow.Application.Features.Approvals.CreateApproval;
+using OpsFlow.Application.Features.Approvals.ListApprovals;
+using OpsFlow.Application.Features.Approvals.GetApproval;
+using OpsFlow.Application.Features.Approvals.ApproveApproval;
+using OpsFlow.Application.Features.Approvals.RejectApproval;
+using OpsFlow.Application.Features.Approvals.CancelApproval;
 using OpsFlow.Application.Features.TimeTracking.CreateTimeEntry;
 using OpsFlow.Application.Features.TimeTracking.DeleteTimeEntry;
 using OpsFlow.Application.Features.TimeTracking.GetTimeEntry;
@@ -108,6 +115,13 @@ public static class DependencyInjection
         services.AddScoped<ChangeTeamLeadHandler>();
 
         services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
+        services.AddScoped<IApprovalRepository, ApprovalRepository>();
+        services.AddScoped<CreateApprovalHandler>();
+        services.AddScoped<ListApprovalsHandler>();
+        services.AddScoped<GetApprovalHandler>();
+        services.AddScoped<ApproveApprovalHandler>();
+        services.AddScoped<RejectApprovalHandler>();
+        services.AddScoped<CancelApprovalHandler>();
         services.AddScoped<CreateTimeEntryHandler>();
         services.AddScoped<ListTimeEntriesHandler>();
         services.AddScoped<GetTimeEntryHandler>();
