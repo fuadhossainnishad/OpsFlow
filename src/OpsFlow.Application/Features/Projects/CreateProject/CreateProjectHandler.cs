@@ -1,14 +1,18 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
 using OpsFlow.Application.Abstractions.Persistence;
+using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Application.Common.Exceptions;
 using OpsFlow.Domain.Projects;
 
 namespace OpsFlow.Application.Features.Projects.CreateProject;
 
-
 public sealed class CreateProjectHandler(
     ITenantContext tenantContext,
+    ICurrentUser currentUser,
     IProjectRepository projectRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<CreateProjectResult> HandleAsync(
@@ -47,8 +51,24 @@ public sealed class CreateProjectHandler(
             project,
             cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(
+        await auditLogger.LogAsync(
+            organizationId,
+            currentUser.UserId,
+            "project.created",
+            "project",
+            project.Id,
+            null,
+            JsonSerializer.Serialize(new
+            {
+                project.Id,
+                project.Name,
+                project.Key,
+                project.Description,
+                Status = project.Status.ToString()
+            }),
             cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new CreateProjectResult(
             project.Id,
@@ -58,6 +78,4 @@ public sealed class CreateProjectHandler(
             project.Description,
             project.Status.ToString());
     }
-
-
 }
