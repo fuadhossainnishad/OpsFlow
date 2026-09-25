@@ -16,6 +16,10 @@ public sealed partial class GlobalExceptionHandler(
     {
         var statusCode = exception switch
         {
+            BadHttpRequestException => StatusCodes.Status400BadRequest,
+            UnauthorizedException => StatusCodes.Status401Unauthorized,
+            ForbiddenException => StatusCodes.Status403Forbidden,
+            NotFoundException => StatusCodes.Status404NotFound,
             ConflictException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };
@@ -37,15 +41,24 @@ public sealed partial class GlobalExceptionHandler(
                 ProblemDetails = new ProblemDetails
                 {
                     Status = statusCode,
-                    Title = statusCode == StatusCodes.Status409Conflict
-                        ? "Conflict"
-                        : "An unexpected error occurred.",
-                    Detail = statusCode == StatusCodes.Status409Conflict
+                    Title = GetTitle(statusCode),
+                    Detail = statusCode is >= 400 and < 500
                         ? exception.Message
                         : null
                 }
             });
     }
+
+    private static string GetTitle(int statusCode) =>
+        statusCode switch
+        {
+            StatusCodes.Status400BadRequest => "Bad Request",
+            StatusCodes.Status401Unauthorized => "Unauthorized",
+            StatusCodes.Status403Forbidden => "Forbidden",
+            StatusCodes.Status404NotFound => "Not Found",
+            StatusCodes.Status409Conflict => "Conflict",
+            _ => "An unexpected error occurred."
+        };
 
     [LoggerMessage(
         EventId = 1000,
