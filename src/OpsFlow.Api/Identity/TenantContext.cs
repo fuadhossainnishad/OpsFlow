@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Tenancy;
+using OpsFlow.Application.Common.Exceptions;
 using OpsFlow.Infrastructure.Persistence;
 
 namespace OpsFlow.Api.Identity;
@@ -28,7 +29,7 @@ public sealed class TenantContext(
 
         if (!Guid.TryParse(headerValue, out var organizationId))
         {
-            throw new InvalidOperationException(
+            throw new BadHttpRequestException(
                 "A valid X-Organization-Id header is required.");
         }
 
@@ -43,7 +44,7 @@ public sealed class TenantContext(
 
         if (!hasMembership)
         {
-            throw new InvalidOperationException(
+            throw new ForbiddenException(
                 "Authenticated user does not belong to the selected organization.");
         }
 

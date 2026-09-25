@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using OpsFlow.Application.Abstractions.Authorization;
 using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Tenancy;
+using OpsFlow.Application.Authorization;
 
 namespace OpsFlow.Api.Authorization;
 
@@ -17,6 +18,12 @@ public sealed class PermissionAuthorizationHandler(
     {
         if (context.User.Identity?.IsAuthenticated != true)
         {
+            return;
+        }
+
+        if (requirement.PermissionCode == PermissionCodes.OrganizationsCreate)
+        {
+            context.Succeed(requirement);
             return;
         }
 
