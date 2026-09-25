@@ -1,16 +1,20 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using OpsFlow.Application.Features.Tasks.Events;
 using OpsFlow.Contracts.Events;
-using Microsoft.Extensions.Options;
+using OpsFlow.Domain.Messaging;
 using OpsFlow.Infrastructure.Messaging;
+using OpsFlow.Infrastructure.Persistence;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Microsoft.Extensions.Options;
 
 namespace OpsFlow.Worker.Messaging;
 
 public sealed partial class RabbitMqConsumer(
     IOptions<RabbitMqOptions> options,
+    OpsFlowDbContext dbContext,
     ILogger<RabbitMqConsumer> logger)
 {
     private readonly RabbitMqOptions _options = options.Value;
@@ -74,7 +78,8 @@ public sealed partial class RabbitMqConsumer(
                     multiple: false,
                     cancellationToken: stoppingToken);
             }
-            catch (Exception exception)
+            catch (Exception exception) when (
+                exception is not OperationCanceledException)
             {
                 LogMessageProcessingFailed(
                     args.RoutingKey,
@@ -101,7 +106,7 @@ public sealed partial class RabbitMqConsumer(
             stoppingToken);
     }
 
-    private static async Task ProcessMessageAsync(
+    private async Task ProcessMessageAsync(
         BasicDeliverEventArgs args,
         CancellationToken cancellationToken)
     {
@@ -113,6 +118,12 @@ public sealed partial class RabbitMqConsumer(
             ?? throw new InvalidOperationException(
                 "RabbitMQ message envelope is invalid.");
 
+        if (envelope.MessageId == Guid.Empty)
+        {
+            throw new InvalidOperationException(
+                "RabbitMQ message ID is missing.");
+        }
+
         if (!string.Equals(
                 envelope.MessageType,
                 args.RoutingKey,
@@ -122,6 +133,45 @@ public sealed partial class RabbitMqConsumer(
                 "RabbitMQ routing key does not match message type.");
         }
 
+        await using var transaction =
+            await dbContext.Database.BeginTransactionAsync(
+                cancellationToken);
+
+        var alreadyProcessed = await dbContext.InboxMessages
+            .AsNoTracking()
+            .AnyAsync(
+                message => message.Id == envelope.MessageId,
+                cancellationToken);
+
+        if (alreadyProcessed)
+        {
+            await transaction.CommitAsync(cancellationToken);
+
+            LogDuplicateMessage(
+                envelope.MessageId,
+                envelope.MessageType);
+
+            return;
+        }
+
+        await ProcessPayloadAsync(
+            envelope,
+            cancellationToken);
+
+        dbContext.InboxMessages.Add(
+            InboxMessage.Create(
+                envelope.MessageId,
+                envelope.MessageType,
+                DateTimeOffset.UtcNow));
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private static async Task ProcessPayloadAsync(
+        RabbitMqEnvelope envelope,
+        CancellationToken cancellationToken)
+    {
         switch (envelope.MessageType)
         {
             case "task.created":
@@ -155,6 +205,14 @@ public sealed partial class RabbitMqConsumer(
         Level = LogLevel.Information,
         Message = "RabbitMQ consumer started for queue {QueueName}")]
     private partial void LogConsumerStarted(string queueName);
+
+    [LoggerMessage(
+        EventId = 2001,
+        Level = LogLevel.Debug,
+        Message = "RabbitMQ duplicate message ignored: {MessageId} ({MessageType})")]
+    private partial void LogDuplicateMessage(
+        Guid messageId,
+        string messageType);
 
     [LoggerMessage(
         EventId = 2002,

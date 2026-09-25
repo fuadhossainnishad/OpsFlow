@@ -21,7 +21,7 @@ builder.Services.AddDbContext<OpsFlowDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
-builder.Services.AddSingleton<RabbitMqConsumer>();
+builder.Services.AddScoped<RabbitMqConsumer>();
 builder.Services.AddScoped<OutboxDispatcher>();
 
 builder.Services.AddHostedService<Worker>();
