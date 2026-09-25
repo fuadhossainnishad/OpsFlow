@@ -8,9 +8,11 @@ public interface IAuditLogRepository
         AuditLog auditLog,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<AuditLog>> GetByResourceAsync(
+    Task<AuditLogPage> GetAsync(
         Guid organizationId,
-        string resource,
-        Guid resourceId,
+        string? resource,
+        Guid? resourceId,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken);
 }

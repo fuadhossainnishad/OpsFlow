@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using OpsFlow.Api.Authorization;
 using OpsFlow.Application.Abstractions.Authorization;
 using OpsFlow.Application.Authorization;
+using OpsFlow.Application.Features.Auditing.ListAuditLogs;
 using Microsoft.EntityFrameworkCore;
 using OpsFlow.Api.Errors;
 using OpsFlow.Infrastructure;
@@ -83,6 +84,8 @@ builder.Services.AddDbContext<OpsFlowDbContext>(options =>
     options.UseSqlServer(connectionString);
 });
 
+
+builder.Services.AddScoped<ListAuditLogsHandler>();
 
 var app = builder.Build();
 
