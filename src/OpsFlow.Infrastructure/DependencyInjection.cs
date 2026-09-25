@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using OpsFlow.Application.Abstractions.Messaging;
+using OpsFlow.Infrastructure.Messaging;
 using OpsFlow.Infrastructure.Persistence;
 using OpsFlow.Application.Abstractions.Security;
 using OpsFlow.Infrastructure.Security;
 using OpsFlow.Application.Features.Identity.RegisterUser;
-using Microsoft.Extensions.Configuration;
 using OpsFlow.Application.Features.Identity.Login;
 using OpsFlow.Application.Features.Organizations.CreateOrganization;
 using OpsFlow.Application.Features.Projects.CreateProject;
@@ -102,6 +104,14 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IAuditLogger, AuditLogger>();
         services.AddHttpContextAccessor();
+
+        services.Configure<RabbitMqOptions>(
+            configuration.GetSection(RabbitMqOptions.SectionName));
+
+        services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
+
+        services.AddScoped<IOutboxWriter, OutboxWriter>();
+
 
         return services;
     }

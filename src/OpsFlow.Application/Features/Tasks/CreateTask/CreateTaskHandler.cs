@@ -1,9 +1,11 @@
 using System.Text.Json;
 using OpsFlow.Application.Abstractions.Auditing;
 using OpsFlow.Application.Abstractions.Identity;
+using OpsFlow.Application.Abstractions.Messaging;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Application.Common.Exceptions;
+using OpsFlow.Contracts.Events;
 using OpsFlow.Domain.Tasks;
 
 namespace OpsFlow.Application.Features.Tasks.CreateTask;
@@ -15,7 +17,8 @@ public sealed class CreateTaskHandler(
     IMembershipRepository membershipRepository,
     ITaskRepository taskRepository,
     IAuditLogger auditLogger,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IOutboxWriter outboxWriter)
 {
     public async Task<CreateTaskResult> HandleAsync(
         CreateTaskCommand command,
@@ -68,6 +71,14 @@ public sealed class CreateTaskHandler(
             task.Id,
             null,
             afterJson,
+            cancellationToken);
+
+        await outboxWriter.AddAsync("task.created", new TaskCreatedEvent(
+                task.Id,
+                task.OrganizationId,
+                task.ProjectId,
+                task.Title,
+                DateTimeOffset.UtcNow),
             cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

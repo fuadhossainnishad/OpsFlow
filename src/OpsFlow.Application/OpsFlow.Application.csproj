@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpsFlow.Domain\OpsFlow.Domain.csproj" />
+    <ProjectReference Include="..\OpsFlow.Contracts\OpsFlow.Contracts.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -6,6 +6,7 @@ using OpsFlow.Domain.Organizations;
 using OpsFlow.Domain.Projects;
 using OpsFlow.Domain.Tasks;
 using OpsFlow.Domain.Teams;
+using OpsFlow.Domain.Messaging;
 namespace OpsFlow.Infrastructure.Persistence;
 
 public sealed class OpsFlowDbContext(
@@ -36,6 +37,8 @@ public sealed class OpsFlowDbContext(
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
