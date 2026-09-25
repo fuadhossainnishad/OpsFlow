@@ -43,6 +43,10 @@ public static class PermissionCodes
         TasksUpdate,
         TasksAssign,
         ReportsRead,
-        BillingManage
+        BillingManage,
+        TeamsRead,
+        TeamsCreate,
+        TeamsUpdate,
+        TeamsManageMembers
     ];
 }

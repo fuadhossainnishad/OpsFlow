@@ -32,6 +32,11 @@ public sealed class UpdateTeamHandler(
             throw new NotFoundException("Team was not found.");
         }
 
+        if (team.IsArchived)
+        {
+            throw new ConflictException("Archived teams cannot be updated.");
+        }
+
         var normalizedName = command.Name.Trim().ToUpperInvariant();
 
         if (await teamRepository.ExistsByNormalizedNameAsync(
