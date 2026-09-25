@@ -1,4 +1,7 @@
 using System.Text;
+using System.Text.Json;
+using OpsFlow.Application.Features.Tasks.Events;
+using OpsFlow.Contracts.Events;
 using Microsoft.Extensions.Options;
 using OpsFlow.Infrastructure.Messaging;
 using RabbitMQ.Client;
@@ -12,8 +15,10 @@ public sealed partial class RabbitMqConsumer(
 {
     private readonly RabbitMqOptions _options = options.Value;
 
-    public async Task RunAsync(
-        CancellationToken stoppingToken)
+    private static readonly JsonSerializerOptions JsonOptions =
+        new(JsonSerializerDefaults.Web);
+
+    public async Task RunAsync(CancellationToken stoppingToken)
     {
         var factory = new ConnectionFactory
         {
@@ -62,13 +67,7 @@ public sealed partial class RabbitMqConsumer(
         {
             try
             {
-                var message = Encoding.UTF8.GetString(args.Body.Span);
-
-                LogMessageReceived(args.RoutingKey);
-
-                // Message handlers will be registered here as the
-                // individual asynchronous workflows are introduced.
-                _ = message;
+                await ProcessMessageAsync(args, stoppingToken);
 
                 await channel.BasicAckAsync(
                     deliveryTag: args.DeliveryTag,
@@ -102,17 +101,60 @@ public sealed partial class RabbitMqConsumer(
             stoppingToken);
     }
 
+    private static async Task ProcessMessageAsync(
+        BasicDeliverEventArgs args,
+        CancellationToken cancellationToken)
+    {
+        var json = Encoding.UTF8.GetString(args.Body.Span);
+
+        var envelope = JsonSerializer.Deserialize<RabbitMqEnvelope>(
+            json,
+            JsonOptions)
+            ?? throw new InvalidOperationException(
+                "RabbitMQ message envelope is invalid.");
+
+        if (!string.Equals(
+                envelope.MessageType,
+                args.RoutingKey,
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "RabbitMQ routing key does not match message type.");
+        }
+
+        switch (envelope.MessageType)
+        {
+            case "task.created":
+            {
+                var message = envelope.Payload.Deserialize<TaskCreatedEvent>(
+                    JsonOptions)
+                    ?? throw new InvalidOperationException(
+                        "TaskCreatedEvent payload is invalid.");
+
+                await TaskCreatedProcessor.ProcessAsync(
+                    message,
+                    cancellationToken);
+
+                break;
+            }
+
+            default:
+                throw new InvalidOperationException(
+                    $"Unsupported message type '{envelope.MessageType}'.");
+        }
+    }
+
+    private sealed record RabbitMqEnvelope(
+        Guid MessageId,
+        string MessageType,
+        DateTimeOffset OccurredAt,
+        JsonElement Payload);
+
     [LoggerMessage(
         EventId = 2000,
         Level = LogLevel.Information,
         Message = "RabbitMQ consumer started for queue {QueueName}")]
     private partial void LogConsumerStarted(string queueName);
-
-    [LoggerMessage(
-        EventId = 2001,
-        Level = LogLevel.Debug,
-        Message = "RabbitMQ message received with routing key {RoutingKey}")]
-    private partial void LogMessageReceived(string routingKey);
 
     [LoggerMessage(
         EventId = 2002,

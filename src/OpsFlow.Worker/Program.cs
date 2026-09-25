@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OpsFlow.Application.Abstractions.Messaging;
+using OpsFlow.Application.Features.Tasks.Events;
 using OpsFlow.Infrastructure.Messaging;
 using OpsFlow.Infrastructure.Persistence;
 using OpsFlow.Worker;
