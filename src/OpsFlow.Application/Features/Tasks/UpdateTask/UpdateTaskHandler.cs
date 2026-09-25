@@ -1,3 +1,6 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
+using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Application.Common.Exceptions;
@@ -7,7 +10,9 @@ namespace OpsFlow.Application.Features.Tasks.UpdateTask;
 
 public sealed class UpdateTaskHandler(
     ITenantContext tenantContext,
+    ICurrentUser currentUser,
     ITaskRepository taskRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<UpdateTaskResult> HandleAsync(
@@ -16,22 +21,47 @@ public sealed class UpdateTaskHandler(
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var organizationId = await tenantContext.GetOrganizationIdAsync(
-            cancellationToken);
+        var organizationId = await tenantContext.GetOrganizationIdAsync(cancellationToken);
 
         var task = await taskRepository.GetByIdAsync(
-            organizationId,
-            command.TaskId,
-            cancellationToken);
+            organizationId, command.TaskId, cancellationToken);
 
         if (task is null)
-        {
             throw new NotFoundException("Task was not found.");
-        }
 
         TaskConcurrency.EnsureCurrent(task, command.RowVersion);
 
+        var beforeJson = JsonSerializer.Serialize(new
+        {
+            task.Id,
+            task.ProjectId,
+            task.Title,
+            task.Description,
+            task.AssigneeUserId,
+            Status = task.Status.ToString()
+        });
+
         task.Update(command.Title, command.Description);
+
+        var afterJson = JsonSerializer.Serialize(new
+        {
+            task.Id,
+            task.ProjectId,
+            task.Title,
+            task.Description,
+            task.AssigneeUserId,
+            Status = task.Status.ToString()
+        });
+
+        await auditLogger.LogAsync(
+            organizationId,
+            currentUser.UserId,
+            "task.updated",
+            "task",
+            task.Id,
+            beforeJson,
+            afterJson,
+            cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
