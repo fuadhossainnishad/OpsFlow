@@ -161,6 +161,348 @@ public sealed class MembershipInvitationTests
             .Be(HttpStatusCode.Conflict);
     }
 
+    [Fact]
+    public async Task OwnerCanChangeMemberRole()
+    {
+        var owner = await RegisterAndLoginAsync(
+            $"owner-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var member = await RegisterAndLoginAsync(
+            $"member-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var organization = await CreateOrganizationAsync(
+            owner.AccessToken,
+            "Role Management Organization");
+
+        var invitationResponse = await SendAsync(
+            HttpMethod.Post,
+            "/api/v1/members/invitations",
+            owner.AccessToken,
+            organization.OrganizationId,
+            new
+            {
+                email = member.Email,
+                roleName = "Member"
+            });
+
+        invitationResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var invitation =
+            await invitationResponse.Content
+                .ReadFromJsonAsync<InvitationResponse>();
+
+        invitation.Should().NotBeNull();
+
+        var acceptResponse = await SendAsync(
+            HttpMethod.Post,
+            "/api/v1/members/invitations/accept",
+            member.AccessToken,
+            null,
+            new
+            {
+                token = invitation!.Token
+            });
+
+        acceptResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var accepted =
+            await acceptResponse.Content
+                .ReadFromJsonAsync<AcceptInvitationResponse>();
+
+        accepted.Should().NotBeNull();
+
+        var changeRoleResponse = await SendAsync(
+            HttpMethod.Put,
+            $"/api/v1/members/{accepted!.MembershipId}/role",
+            owner.AccessToken,
+            organization.OrganizationId,
+            new
+            {
+                roleName = "Team Lead"
+            });
+
+        changeRoleResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var changed =
+            await changeRoleResponse.Content
+                .ReadFromJsonAsync<ChangeMemberRoleResponse>();
+
+        changed.Should().NotBeNull();
+        changed!.MembershipId
+            .Should()
+            .Be(accepted.MembershipId);
+
+        changed.RoleName
+            .Should()
+            .Be("Team Lead");
+
+        changed.IsActive
+            .Should()
+            .BeTrue();
+    }
+
+    [Fact]
+    public async Task OwnerCanDeactivateAndReactivateMember()
+    {
+        var owner = await RegisterAndLoginAsync(
+            $"owner-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var member = await RegisterAndLoginAsync(
+            $"member-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var organization = await CreateOrganizationAsync(
+            owner.AccessToken,
+            "Member Lifecycle Organization");
+
+        var invitationResponse = await SendAsync(
+            HttpMethod.Post,
+            "/api/v1/members/invitations",
+            owner.AccessToken,
+            organization.OrganizationId,
+            new
+            {
+                email = member.Email,
+                roleName = "Member"
+            });
+
+        invitationResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var invitation =
+            await invitationResponse.Content
+                .ReadFromJsonAsync<InvitationResponse>();
+
+        invitation.Should().NotBeNull();
+
+        var acceptResponse = await SendAsync(
+            HttpMethod.Post,
+            "/api/v1/members/invitations/accept",
+            member.AccessToken,
+            null,
+            new
+            {
+                token = invitation!.Token
+            });
+
+        acceptResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var accepted =
+            await acceptResponse.Content
+                .ReadFromJsonAsync<AcceptInvitationResponse>();
+
+        accepted.Should().NotBeNull();
+
+        var deactivateResponse = await SendAsync(
+            HttpMethod.Put,
+            $"/api/v1/members/{accepted!.MembershipId}/deactivate",
+            owner.AccessToken,
+            organization.OrganizationId);
+
+        deactivateResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var deactivated =
+            await deactivateResponse.Content
+                .ReadFromJsonAsync<MemberStatusResponse>();
+
+        deactivated.Should().NotBeNull();
+        deactivated!.MembershipId
+            .Should()
+            .Be(accepted.MembershipId);
+
+        deactivated.IsActive
+            .Should()
+            .BeFalse();
+
+        var reactivateResponse = await SendAsync(
+            HttpMethod.Put,
+            $"/api/v1/members/{accepted.MembershipId}/reactivate",
+            owner.AccessToken,
+            organization.OrganizationId);
+
+        reactivateResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var reactivated =
+            await reactivateResponse.Content
+                .ReadFromJsonAsync<MemberStatusResponse>();
+
+        reactivated.Should().NotBeNull();
+        reactivated!.MembershipId
+            .Should()
+            .Be(accepted.MembershipId);
+
+        reactivated.IsActive
+            .Should()
+            .BeTrue();
+    }
+
+    [Fact]
+    public async Task RegularMemberCannotManageOrganizationMembers()
+    {
+        var owner = await RegisterAndLoginAsync(
+            $"owner-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var member = await RegisterAndLoginAsync(
+            $"member-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var target = await RegisterAndLoginAsync(
+            $"target-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var organization = await CreateOrganizationAsync(
+            owner.AccessToken,
+            "Member Authorization Organization");
+
+        await AcceptInvitationAsync(
+            owner,
+            member,
+            organization.OrganizationId,
+            "Member");
+
+        var targetMembership = await AcceptInvitationAsync(
+            owner,
+            target,
+            organization.OrganizationId,
+            "Member");
+
+        var changeRoleResponse = await SendAsync(
+            HttpMethod.Put,
+            $"/api/v1/members/{targetMembership.MembershipId}/role",
+            member.AccessToken,
+            organization.OrganizationId,
+            new
+            {
+                roleName = "Team Lead"
+            });
+
+        changeRoleResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.Forbidden);
+
+        var deactivateResponse = await SendAsync(
+            HttpMethod.Put,
+            $"/api/v1/members/{targetMembership.MembershipId}/deactivate",
+            member.AccessToken,
+            organization.OrganizationId);
+
+        deactivateResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task MemberCannotManipulateMembershipFromAnotherOrganization()
+    {
+        var ownerOne = await RegisterAndLoginAsync(
+            $"owner-one-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var ownerTwo = await RegisterAndLoginAsync(
+            $"owner-two-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var member = await RegisterAndLoginAsync(
+            $"member-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var organizationOne = await CreateOrganizationAsync(
+            ownerOne.AccessToken,
+            "First Isolation Organization");
+
+        var organizationTwo = await CreateOrganizationAsync(
+            ownerTwo.AccessToken,
+            "Second Isolation Organization");
+
+        var membership =
+            await AcceptInvitationAsync(
+                ownerTwo,
+                member,
+                organizationTwo.OrganizationId,
+                "Member");
+
+        var response = await SendAsync(
+            HttpMethod.Put,
+            $"/api/v1/members/{membership.MembershipId}/role",
+            ownerOne.AccessToken,
+            organizationOne.OrganizationId,
+            new
+            {
+                roleName = "Team Lead"
+            });
+
+        response.StatusCode
+            .Should()
+            .Be(HttpStatusCode.NotFound);
+    }
+
+    private async Task<AcceptInvitationResponse> AcceptInvitationAsync(
+        AuthResult owner,
+        AuthResult member,
+        Guid organizationId,
+        string roleName)
+    {
+        var invitationResponse = await SendAsync(
+            HttpMethod.Post,
+            "/api/v1/members/invitations",
+            owner.AccessToken,
+            organizationId,
+            new
+            {
+                email = member.Email,
+                roleName
+            });
+
+        invitationResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var invitation =
+            await invitationResponse.Content
+                .ReadFromJsonAsync<InvitationResponse>();
+
+        invitation.Should().NotBeNull();
+
+        var acceptResponse = await SendAsync(
+            HttpMethod.Post,
+            "/api/v1/members/invitations/accept",
+            member.AccessToken,
+            null,
+            new
+            {
+                token = invitation!.Token
+            });
+
+        acceptResponse.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        var accepted =
+            await acceptResponse.Content
+                .ReadFromJsonAsync<AcceptInvitationResponse>();
+
+        accepted.Should().NotBeNull();
+
+        return accepted!;
+    }
+
     private async Task<AuthResult> RegisterAndLoginAsync(
         string email,
         string password)
@@ -309,4 +651,19 @@ public sealed class MembershipInvitationTests
         Guid OrganizationId,
         Guid UserId,
         Guid RoleId);
+
+
+    private sealed record ChangeMemberRoleResponse(
+        Guid MembershipId,
+        Guid OrganizationId,
+        Guid UserId,
+        Guid RoleId,
+        string RoleName,
+        bool IsActive);
+
+    private sealed record MemberStatusResponse(
+        Guid MembershipId,
+        Guid OrganizationId,
+        Guid UserId,
+        bool IsActive);
 }

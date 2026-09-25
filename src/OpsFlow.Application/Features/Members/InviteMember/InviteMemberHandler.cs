@@ -33,7 +33,7 @@ public sealed class InviteMemberHandler(
 
         var email = command.Email.Trim();
         var normalizedEmail = email.ToUpperInvariant();
-        var normalizedRoleName = command.RoleName.Trim().ToUpperInvariant();
+        var normalizedRoleName = command.RoleName.Trim().ToUpperInvariant().Replace(' ', '_');
 
         var role = await roleRepository.GetByNormalizedNameAsync(
             normalizedRoleName,

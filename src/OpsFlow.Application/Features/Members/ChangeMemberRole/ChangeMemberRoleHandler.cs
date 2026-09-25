@@ -35,7 +35,10 @@ public sealed class ChangeMemberRoleHandler(
             throw new NotFoundException("The membership was not found.");
         }
 
-        var normalizedRoleName = command.RoleName.Trim().ToUpperInvariant();
+        var normalizedRoleName = command.RoleName
+            .Trim()
+            .ToUpperInvariant()
+            .Replace(' ', '_');
 
         var role = await roleRepository.GetByNormalizedNameAsync(
             normalizedRoleName,
