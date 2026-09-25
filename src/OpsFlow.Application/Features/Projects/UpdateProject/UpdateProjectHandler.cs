@@ -1,3 +1,6 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
+using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Application.Common.Exceptions;
@@ -6,7 +9,9 @@ namespace OpsFlow.Application.Features.Projects.UpdateProject;
 
 public sealed class UpdateProjectHandler(
     ITenantContext tenantContext,
+    ICurrentUser currentUser,
     IProjectRepository projectRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<UpdateProjectResult> HandleAsync(
@@ -15,8 +20,7 @@ public sealed class UpdateProjectHandler(
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var organizationId = await tenantContext.GetOrganizationIdAsync(
-            cancellationToken);
+        var organizationId = await tenantContext.GetOrganizationIdAsync(cancellationToken);
 
         var project = await projectRepository.GetByIdAsync(
             organizationId,
@@ -28,7 +32,35 @@ public sealed class UpdateProjectHandler(
             throw new NotFoundException("Project was not found.");
         }
 
+        var beforeJson = JsonSerializer.Serialize(new
+        {
+            project.Id,
+            project.Name,
+            project.Key,
+            project.Description,
+            Status = project.Status.ToString()
+        });
+
         project.Update(command.Name, command.Description);
+
+        var afterJson = JsonSerializer.Serialize(new
+        {
+            project.Id,
+            project.Name,
+            project.Key,
+            project.Description,
+            Status = project.Status.ToString()
+        });
+
+        await auditLogger.LogAsync(
+            organizationId,
+            currentUser.UserId,
+            "project.updated",
+            "project",
+            project.Id,
+            beforeJson,
+            afterJson,
+            cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
