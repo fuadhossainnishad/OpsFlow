@@ -88,4 +88,13 @@ public static class PermissionIds
     
     public static readonly Guid NotificationsRead =
         Guid.Parse("77777777-7777-7777-7777-777777777776");
+
+    public static readonly Guid FilesRead =
+        Guid.Parse("77777777-7777-7777-7777-777777777777");
+
+    public static readonly Guid FilesCreate =
+        Guid.Parse("77777777-7777-7777-7777-777777777778");
+
+    public static readonly Guid FilesDelete =
+        Guid.Parse("77777777-7777-7777-7777-777777777779");
 }

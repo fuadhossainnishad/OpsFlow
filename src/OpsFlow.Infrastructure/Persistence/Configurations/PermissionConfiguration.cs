@@ -168,6 +168,24 @@ public sealed class PermissionConfiguration
                 Id = PermissionIds.NotificationsRead,
                 Code = "notifications.read",
                 Name = "Read notifications"
+            },
+            new
+            {
+                Id = PermissionIds.FilesRead,
+                Code = "files.read",
+                Name = "Read files"
+            },
+            new
+            {
+                Id = PermissionIds.FilesCreate,
+                Code = "files.create",
+                Name = "Create files"
+            },
+            new
+            {
+                Id = PermissionIds.FilesDelete,
+                Code = "files.delete",
+                Name = "Delete files"
             }
             );
     }

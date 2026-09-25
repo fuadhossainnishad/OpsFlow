@@ -10,6 +10,7 @@ using OpsFlow.Domain.TimeTracking;
 using OpsFlow.Domain.Teams;
 using OpsFlow.Domain.Messaging;
 using OpsFlow.Domain.Notifications;
+using OpsFlow.Domain.Files;
 namespace OpsFlow.Infrastructure.Persistence;
 
 public sealed class OpsFlowDbContext(
@@ -46,6 +47,7 @@ public sealed class OpsFlowDbContext(
 
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<FileRecord> Files => Set<FileRecord>();
 
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
 
