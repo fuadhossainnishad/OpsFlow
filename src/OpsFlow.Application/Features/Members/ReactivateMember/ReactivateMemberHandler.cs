@@ -1,3 +1,6 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
+using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Application.Common.Exceptions;
@@ -6,7 +9,9 @@ namespace OpsFlow.Application.Features.Members.ReactivateMember;
 
 public sealed class ReactivateMemberHandler(
     ITenantContext tenantContext,
+    ICurrentUser currentUser,
     IMembershipRepository membershipRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<ReactivateMemberResult> HandleAsync(
@@ -28,7 +33,31 @@ public sealed class ReactivateMemberHandler(
             throw new NotFoundException("The membership was not found.");
         }
 
+        var beforeJson = JsonSerializer.Serialize(new
+        {
+            membership.Id,
+            membership.UserId,
+            membership.IsActive
+        });
+
         membership.Activate();
+
+        var afterJson = JsonSerializer.Serialize(new
+        {
+            membership.Id,
+            membership.UserId,
+            membership.IsActive
+        });
+
+        await auditLogger.LogAsync(
+            organizationId,
+            currentUser.UserId,
+            "membership.reactivated",
+            "membership",
+            membership.Id,
+            beforeJson,
+            afterJson,
+            cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

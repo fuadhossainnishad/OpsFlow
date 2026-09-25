@@ -1,3 +1,6 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
+using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Common.Exceptions;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
@@ -8,15 +11,18 @@ namespace OpsFlow.Application.Features.Teams.AddTeamMember;
 
 public sealed class AddTeamMemberHandler(
     ITenantContext tenantContext,
+    ICurrentUser currentUser,
     ITeamRepository teamRepository,
     IMembershipRepository membershipRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<AddTeamMemberResult> Handle(
         AddTeamMemberCommand command,
         CancellationToken cancellationToken)
     {
-        var organizationId = await tenantContext.GetOrganizationIdAsync(cancellationToken);
+        var organizationId =
+            await tenantContext.GetOrganizationIdAsync(cancellationToken);
 
         var team = await teamRepository.GetByIdAsync(
             organizationId,
@@ -52,11 +58,25 @@ public sealed class AddTeamMemberHandler(
             throw new ConflictException("The member is already part of this team.");
         }
 
-        var teamMember = TeamMember.Create(
-            team.Id,
-            membership.Id);
+        var teamMember = TeamMember.Create(team.Id, membership.Id);
 
         await teamRepository.AddMemberAsync(teamMember, cancellationToken);
+
+        await auditLogger.LogAsync(
+            organizationId,
+            currentUser.UserId,
+            "team.member_added",
+            "team",
+            team.Id,
+            null,
+            JsonSerializer.Serialize(new
+            {
+                TeamId = team.Id,
+                TeamMemberId = teamMember.Id,
+                MembershipId = membership.Id
+            }),
+            cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new AddTeamMemberResult(

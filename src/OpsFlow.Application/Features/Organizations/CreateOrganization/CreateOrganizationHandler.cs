@@ -1,3 +1,5 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
 using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Common.Exceptions;
@@ -10,6 +12,7 @@ public sealed class CreateOrganizationHandler(
     IOrganizationRepository organizationRepository,
     IMembershipRepository membershipRepository,
     IRoleRepository roleRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<CreateOrganizationResult> HandleAsync(
@@ -24,53 +27,17 @@ public sealed class CreateOrganizationHandler(
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(slug);
 
-        var slugExists = await organizationRepository
-            .ExistsBySlugAsync(
-                slug,
-                cancellationToken);
-
-        if (slugExists)
+        if (await organizationRepository.ExistsBySlugAsync(slug, cancellationToken))
         {
             throw new ConflictException(
                 "An organization with this slug already exists.");
         }
 
-        var organization = Organization.Create(
-            name,
-            slug);
+        var organization = Organization.Create(name, slug);
 
-        var ownerRoleId = await GetOwnerRoleIdAsync(
+        var ownerRole = await roleRepository.GetByNormalizedNameAsync(
+            "OWNER",
             cancellationToken);
-
-        var membership = Membership.Create(
-            organization.Id,
-            currentUser.UserId,
-            ownerRoleId);
-
-        await organizationRepository.AddAsync(
-            organization,
-            cancellationToken);
-
-        await membershipRepository.AddAsync(
-            membership,
-            cancellationToken);
-
-        await unitOfWork.SaveChangesAsync(
-            cancellationToken);
-
-        return new CreateOrganizationResult(
-            organization.Id,
-            organization.Name,
-            organization.Slug);
-    }
-
-    private async Task<Guid> GetOwnerRoleIdAsync(
-        CancellationToken cancellationToken)
-    {
-        var ownerRole = await roleRepository
-            .GetByNormalizedNameAsync(
-                "OWNER",
-                cancellationToken);
 
         if (ownerRole is null || !ownerRole.IsSystemRole)
         {
@@ -78,6 +45,34 @@ public sealed class CreateOrganizationHandler(
                 "The system Owner role is not configured.");
         }
 
-        return ownerRole.Id;
+        var membership = Membership.Create(
+            organization.Id,
+            currentUser.UserId,
+            ownerRole.Id);
+
+        await organizationRepository.AddAsync(organization, cancellationToken);
+        await membershipRepository.AddAsync(membership, cancellationToken);
+
+        await auditLogger.LogAsync(
+            organization.Id,
+            currentUser.UserId,
+            "organization.created",
+            "organization",
+            organization.Id,
+            null,
+            JsonSerializer.Serialize(new
+            {
+                organization.Id,
+                organization.Name,
+                organization.Slug
+            }),
+            cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new CreateOrganizationResult(
+            organization.Id,
+            organization.Name,
+            organization.Slug);
     }
 }

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
 using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Common.Exceptions;
@@ -11,6 +13,7 @@ public sealed class AcceptInvitationHandler(
     IUserRepository userRepository,
     IOrganizationInvitationRepository invitationRepository,
     IMembershipRepository membershipRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<AcceptInvitationResult> HandleAsync(
@@ -66,8 +69,22 @@ public sealed class AcceptInvitationHandler(
             user.Id,
             invitation.RoleId);
 
-        await membershipRepository.AddAsync(
-            membership,
+        await membershipRepository.AddAsync(membership, cancellationToken);
+
+        await auditLogger.LogAsync(
+            invitation.OrganizationId,
+            currentUser.UserId,
+            "membership.invitation_accepted",
+            "organization_invitation",
+            invitation.Id,
+            null,
+            JsonSerializer.Serialize(new
+            {
+                invitation.Id,
+                MembershipId = membership.Id,
+                membership.UserId,
+                membership.RoleId
+            }),
             cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

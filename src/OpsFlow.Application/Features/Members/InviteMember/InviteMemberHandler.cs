@@ -1,3 +1,6 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
+using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Application.Common.Exceptions;
@@ -8,10 +11,12 @@ namespace OpsFlow.Application.Features.Members.InviteMember;
 
 public sealed class InviteMemberHandler(
     ITenantContext tenantContext,
+    ICurrentUser currentUser,
     IOrganizationInvitationRepository invitationRepository,
     IMembershipRepository membershipRepository,
     IUserRepository userRepository,
     IRoleRepository roleRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<InviteMemberResult> HandleAsync(
@@ -71,8 +76,22 @@ public sealed class InviteMemberHandler(
             InvitationToken.Hash(token),
             DateTimeOffset.UtcNow.AddDays(7));
 
-        await invitationRepository.AddAsync(
-            invitation,
+        await invitationRepository.AddAsync(invitation, cancellationToken);
+
+        await auditLogger.LogAsync(
+            organizationId,
+            currentUser.UserId,
+            "membership.invited",
+            "organization_invitation",
+            invitation.Id,
+            null,
+            JsonSerializer.Serialize(new
+            {
+                invitation.Id,
+                invitation.Email,
+                Role = role.Name,
+                invitation.ExpiresAtUtc
+            }),
             cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

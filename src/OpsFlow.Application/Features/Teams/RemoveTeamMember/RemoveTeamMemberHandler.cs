@@ -1,3 +1,6 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
+using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Common.Exceptions;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
@@ -7,14 +10,17 @@ namespace OpsFlow.Application.Features.Teams.RemoveTeamMember;
 
 public sealed class RemoveTeamMemberHandler(
     ITenantContext tenantContext,
+    ICurrentUser currentUser,
     ITeamRepository teamRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<RemoveTeamMemberResult> Handle(
         RemoveTeamMemberCommand command,
         CancellationToken cancellationToken)
     {
-        var organizationId = await tenantContext.GetOrganizationIdAsync(cancellationToken);
+        var organizationId =
+            await tenantContext.GetOrganizationIdAsync(cancellationToken);
 
         var team = await teamRepository.GetByIdAsync(
             organizationId,
@@ -44,6 +50,21 @@ public sealed class RemoveTeamMemberHandler(
         }
 
         teamRepository.RemoveMember(member);
+
+        await auditLogger.LogAsync(
+            organizationId,
+            currentUser.UserId,
+            "team.member_removed",
+            "team",
+            team.Id,
+            JsonSerializer.Serialize(new
+            {
+                TeamId = team.Id,
+                TeamMemberId = member.Id,
+                MembershipId = command.MembershipId
+            }),
+            null,
+            cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

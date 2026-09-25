@@ -1,3 +1,6 @@
+using System.Text.Json;
+using OpsFlow.Application.Abstractions.Auditing;
+using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Common.Exceptions;
 using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
@@ -7,15 +10,18 @@ namespace OpsFlow.Application.Features.Teams.ChangeTeamLead;
 
 public sealed class ChangeTeamLeadHandler(
     ITenantContext tenantContext,
+    ICurrentUser currentUser,
     ITeamRepository teamRepository,
     IMembershipRepository membershipRepository,
+    IAuditLogger auditLogger,
     IUnitOfWork unitOfWork)
 {
     public async Task<ChangeTeamLeadResult> Handle(
         ChangeTeamLeadCommand command,
         CancellationToken cancellationToken)
     {
-        var organizationId = await tenantContext.GetOrganizationIdAsync(cancellationToken);
+        var organizationId =
+            await tenantContext.GetOrganizationIdAsync(cancellationToken);
 
         var team = await teamRepository.GetByIdAsync(
             organizationId,
@@ -54,7 +60,29 @@ public sealed class ChangeTeamLeadHandler(
                 "The team lead must be a member of the team.");
         }
 
+        var beforeJson = JsonSerializer.Serialize(new
+        {
+            team.Id,
+            team.TeamLeadMembershipId
+        });
+
         team.SetTeamLead(membership.Id);
+
+        var afterJson = JsonSerializer.Serialize(new
+        {
+            team.Id,
+            team.TeamLeadMembershipId
+        });
+
+        await auditLogger.LogAsync(
+            organizationId,
+            currentUser.UserId,
+            "team.lead_changed",
+            "team",
+            team.Id,
+            beforeJson,
+            afterJson,
+            cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
