@@ -15,6 +15,7 @@ public sealed class RabbitMqMessagePublisher(
     private readonly SemaphoreSlim _initializationLock = new(1, 1);
 
     public async Task PublishAsync<TMessage>(
+        Guid messageId,
         string messageType,
         TMessage message,
         CancellationToken cancellationToken)
@@ -26,7 +27,7 @@ public sealed class RabbitMqMessagePublisher(
 
         var envelope = new
         {
-            MessageId = Guid.NewGuid(),
+            MessageId = messageId,
             MessageType = messageType,
             OccurredAt = DateTimeOffset.UtcNow,
             Payload = message
@@ -39,7 +40,7 @@ public sealed class RabbitMqMessagePublisher(
             ContentType = "application/json",
             ContentEncoding = "utf-8",
             DeliveryMode = DeliveryModes.Persistent,
-            MessageId = envelope.MessageId.ToString(),
+            MessageId = messageId.ToString(),
             Type = messageType,
             Timestamp = new AmqpTimestamp(
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds())
