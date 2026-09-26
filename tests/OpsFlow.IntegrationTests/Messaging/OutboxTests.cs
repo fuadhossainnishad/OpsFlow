@@ -56,8 +56,13 @@ public sealed class OutboxTests : IClassFixture<OpsFlowWebApplicationFactory>
             scope.ServiceProvider.GetRequiredService<OpsFlowDbContext>();
 
         var outboxMessage = await dbContext.OutboxMessages
+            .Where(message =>
+                message.MessageType == "task.created" &&
+                message.Payload.Contains(project.Id.ToString()))
             .OrderByDescending(message => message.OccurredAt)
-            .FirstAsync();
+            .FirstOrDefaultAsync();
+
+        outboxMessage.Should().NotBeNull();
 
         outboxMessage.MessageType
             .Should()
