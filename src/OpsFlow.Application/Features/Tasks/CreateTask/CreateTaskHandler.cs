@@ -78,6 +78,7 @@ public sealed class CreateTaskHandler(
                 task.OrganizationId,
                 task.ProjectId,
                 task.Title,
+                task.AssigneeUserId,
                 DateTimeOffset.UtcNow),
             cancellationToken);
 

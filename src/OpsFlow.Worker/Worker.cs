@@ -9,19 +9,11 @@ public sealed class Worker(
     protected override async Task ExecuteAsync(
         CancellationToken stoppingToken)
     {
-        using var scope = scopeFactory.CreateScope();
-
-        var consumer =
-            scope.ServiceProvider.GetRequiredService<RabbitMqConsumer>();
-
-        var dispatcher =
-            scope.ServiceProvider.GetRequiredService<OutboxDispatcher>();
-
-        var consumerTask = consumer.RunAsync(stoppingToken);
+        var consumerTask = RunConsumerAsync(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await dispatcher.DispatchAsync(stoppingToken);
+            await RunDispatcherAsync(stoppingToken);
 
             await Task.Delay(
                 TimeSpan.FromSeconds(2),
@@ -29,5 +21,29 @@ public sealed class Worker(
         }
 
         await consumerTask;
+    }
+
+    private async Task RunConsumerAsync(
+        CancellationToken cancellationToken)
+    {
+        await using var scope =
+            scopeFactory.CreateAsyncScope();
+
+        var consumer =
+            scope.ServiceProvider.GetRequiredService<RabbitMqConsumer>();
+
+        await consumer.RunAsync(cancellationToken);
+    }
+
+    private async Task RunDispatcherAsync(
+        CancellationToken cancellationToken)
+    {
+        await using var scope =
+            scopeFactory.CreateAsyncScope();
+
+        var dispatcher =
+            scope.ServiceProvider.GetRequiredService<OutboxDispatcher>();
+
+        await dispatcher.DispatchAsync(cancellationToken);
     }
 }

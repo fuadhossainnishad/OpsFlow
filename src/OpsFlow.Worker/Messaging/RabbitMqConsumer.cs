@@ -9,12 +9,14 @@ using OpsFlow.Infrastructure.Persistence;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Microsoft.Extensions.Options;
+using OpsFlow.Application.Abstractions.Notifications;
 
 namespace OpsFlow.Worker.Messaging;
 
 public sealed partial class RabbitMqConsumer(
     IOptions<RabbitMqOptions> options,
     OpsFlowDbContext dbContext,
+        INotificationRepository notificationRepository,
     ILogger<RabbitMqConsumer> logger)
 {
     private readonly RabbitMqOptions _options = options.Value;
@@ -168,25 +170,26 @@ public sealed partial class RabbitMqConsumer(
         await transaction.CommitAsync(cancellationToken);
     }
 
-    private static async Task ProcessPayloadAsync(
+    private  async Task ProcessPayloadAsync(
         RabbitMqEnvelope envelope,
         CancellationToken cancellationToken)
     {
         switch (envelope.MessageType)
         {
             case "task.created":
-            {
-                var message = envelope.Payload.Deserialize<TaskCreatedEvent>(
-                    JsonOptions)
-                    ?? throw new InvalidOperationException(
-                        "TaskCreatedEvent payload is invalid.");
+                {
+                    var message = envelope.Payload.Deserialize<TaskCreatedEvent>(
+                        JsonOptions)
+                        ?? throw new InvalidOperationException(
+                            "TaskCreatedEvent payload is invalid.");
 
-                await TaskCreatedProcessor.ProcessAsync(
-                    message,
-                    cancellationToken);
+                    await TaskCreatedProcessor.ProcessAsync(
+                        message,
+                            notificationRepository,
+                        cancellationToken);
 
-                break;
-            }
+                    break;
+                }
 
             default:
                 throw new InvalidOperationException(

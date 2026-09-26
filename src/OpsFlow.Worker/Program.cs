@@ -6,6 +6,8 @@ using OpsFlow.Infrastructure.Persistence;
 using OpsFlow.Worker;
 using OpsFlow.Worker.Messaging;
 using OpsFlow.Worker.Outbox;
+using OpsFlow.Application.Abstractions.Notifications;
+using OpsFlow.Infrastructure.Persistence.Repositories;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -19,6 +21,8 @@ builder.Services.Configure<RabbitMqOptions>(
 
 builder.Services.AddDbContext<OpsFlowDbContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 builder.Services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
 builder.Services.AddScoped<RabbitMqConsumer>();

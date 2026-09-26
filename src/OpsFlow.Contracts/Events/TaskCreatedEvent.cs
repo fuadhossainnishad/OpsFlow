@@ -5,4 +5,5 @@ public sealed record TaskCreatedEvent(
     Guid OrganizationId,
     Guid ProjectId,
     string Title,
+    Guid? AssigneeUserId,
     DateTimeOffset OccurredAt);

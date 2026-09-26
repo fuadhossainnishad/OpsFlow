@@ -17,6 +17,7 @@ public sealed partial class GlobalExceptionHandler(
         var statusCode = exception switch
         {
             BadHttpRequestException => StatusCodes.Status400BadRequest,
+            ArgumentException => StatusCodes.Status400BadRequest,
             UnauthorizedException => StatusCodes.Status401Unauthorized,
             ForbiddenException => StatusCodes.Status403Forbidden,
             NotFoundException => StatusCodes.Status404NotFound,
