@@ -1156,6 +1156,14 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                     b.Property<string>("Error")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset?>("DeadLetteredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("DeliveryAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("MessageType")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1171,9 +1179,12 @@ namespace OpsFlow.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("ProcessedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ProcessedAt", "OccurredAt");
+                    b.HasIndex("DeadLetteredAt", "ProcessedAt", "NextAttemptAt", "OccurredAt");
 
                     b.ToTable("OutboxMessages", (string)null);
                 });

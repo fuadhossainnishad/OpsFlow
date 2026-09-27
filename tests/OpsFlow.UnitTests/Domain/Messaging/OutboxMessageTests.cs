@@ -68,7 +68,11 @@ public sealed class OutboxMessageTests
             "{}",
             DateTimeOffset.UtcNow);
 
-        message.MarkFailed("Temporary processing failure");
+        message.MarkFailed(
+            "Temporary processing failure",
+            DateTimeOffset.UtcNow,
+            TimeSpan.FromMinutes(1),
+            maxAttempts: 3);
 
         var processedAt = DateTimeOffset.UtcNow.AddMinutes(1);
 
@@ -76,6 +80,7 @@ public sealed class OutboxMessageTests
 
         message.ProcessedAt.Should().Be(processedAt);
         message.Error.Should().BeNull();
+        message.NextAttemptAt.Should().BeNull();
     }
 
     [Fact]
@@ -86,9 +91,38 @@ public sealed class OutboxMessageTests
             "{}",
             DateTimeOffset.UtcNow);
 
-        message.MarkFailed("Publishing failed");
+        var failedAt = DateTimeOffset.UtcNow;
+        message.MarkFailed(
+            "Publishing failed",
+            failedAt,
+            TimeSpan.FromMinutes(1),
+            maxAttempts: 3);
 
         message.Error.Should().Be("Publishing failed");
+        message.ProcessedAt.Should().BeNull();
+        message.DeliveryAttempts.Should().Be(1);
+        message.NextAttemptAt.Should().Be(failedAt.AddMinutes(1));
+        message.DeadLetteredAt.Should().BeNull();
+    }
+
+    [Fact]
+    public void MarkFailedShouldDeadLetterAfterMaximumAttempts()
+    {
+        var message = OutboxMessage.Create("order.created", "{}", DateTimeOffset.UtcNow);
+        var failedAt = DateTimeOffset.UtcNow;
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            message.MarkFailed(
+                "Publishing failed",
+                failedAt.AddMinutes(attempt),
+                TimeSpan.FromSeconds(1),
+                maxAttempts: 3);
+        }
+
+        message.DeliveryAttempts.Should().Be(3);
+        message.DeadLetteredAt.Should().Be(failedAt.AddMinutes(2));
+        message.NextAttemptAt.Should().BeNull();
         message.ProcessedAt.Should().BeNull();
     }
 }

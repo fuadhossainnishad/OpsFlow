@@ -16,6 +16,12 @@ public sealed class OutboxMessage
 
     public DateTimeOffset? ProcessedAt { get; private set; }
 
+    public int DeliveryAttempts { get; private set; }
+
+    public DateTimeOffset? NextAttemptAt { get; private set; }
+
+    public DateTimeOffset? DeadLetteredAt { get; private set; }
+
     public string? Error { get; private set; }
 
     public static OutboxMessage Create(
@@ -38,11 +44,32 @@ public sealed class OutboxMessage
     public void MarkProcessed(DateTimeOffset processedAt)
     {
         ProcessedAt = processedAt;
+        NextAttemptAt = null;
         Error = null;
     }
 
-    public void MarkFailed(string error)
+    public void MarkFailed(
+        string error,
+        DateTimeOffset failedAt,
+        TimeSpan retryDelay,
+        int maxAttempts)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(error);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxAttempts);
+        ArgumentOutOfRangeException.ThrowIfLessThan(
+            retryDelay,
+            TimeSpan.Zero);
+
+        DeliveryAttempts++;
         Error = error;
+
+        if (DeliveryAttempts >= maxAttempts)
+        {
+            DeadLetteredAt = failedAt;
+            NextAttemptAt = null;
+            return;
+        }
+
+        NextAttemptAt = failedAt.Add(retryDelay);
     }
 }

@@ -27,6 +27,10 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
 builder.Services.AddScoped<RabbitMqConsumer>();
 builder.Services.AddScoped<OutboxDispatcher>();
+builder.Services.AddScoped<IRabbitMqConsumer>(services =>
+    services.GetRequiredService<RabbitMqConsumer>());
+builder.Services.AddScoped<IOutboxDispatcher>(services =>
+    services.GetRequiredService<OutboxDispatcher>());
 
 builder.Services.AddHostedService<Worker>();
 

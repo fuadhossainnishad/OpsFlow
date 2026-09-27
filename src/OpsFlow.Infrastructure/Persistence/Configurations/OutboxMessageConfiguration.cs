@@ -23,9 +23,15 @@ public sealed class OutboxMessageConfiguration
         builder.Property(message => message.OccurredAt)
             .IsRequired();
 
+        builder.Property(message => message.DeliveryAttempts)
+            .HasDefaultValue(0)
+            .IsRequired();
+
         builder.HasIndex(message => new
         {
+            message.DeadLetteredAt,
             message.ProcessedAt,
+            message.NextAttemptAt,
             message.OccurredAt
         });
     }

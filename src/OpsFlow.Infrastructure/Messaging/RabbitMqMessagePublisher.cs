@@ -12,7 +12,7 @@ public sealed class RabbitMqMessagePublisher(
     private readonly RabbitMqOptions _options = options.Value;
     private IConnection? _connection;
     private IChannel? _channel;
-    private readonly SemaphoreSlim _initializationLock = new(1, 1);
+    private readonly SemaphoreSlim _publishLock = new(1, 1);
 
     public async Task PublishAsync<TMessage>(
         Guid messageId,
@@ -23,94 +23,136 @@ public sealed class RabbitMqMessagePublisher(
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
         ArgumentNullException.ThrowIfNull(message);
 
-        await EnsureInitializedAsync(cancellationToken);
-
-        var envelope = new
+        await _publishLock.WaitAsync(cancellationToken);
+        try
         {
-            MessageId = messageId,
-            MessageType = messageType,
-            OccurredAt = DateTimeOffset.UtcNow,
-            Payload = message
-        };
+            await EnsureInitializedAsync(cancellationToken);
 
-        var body = JsonSerializer.SerializeToUtf8Bytes(envelope);
+            var envelope = new
+            {
+                MessageId = messageId,
+                MessageType = messageType,
+                OccurredAt = DateTimeOffset.UtcNow,
+                Payload = message
+            };
 
-        var properties = new BasicProperties
+            var body = JsonSerializer.SerializeToUtf8Bytes(envelope);
+
+            var properties = new BasicProperties
+            {
+                ContentType = "application/json",
+                ContentEncoding = "utf-8",
+                DeliveryMode = DeliveryModes.Persistent,
+                MessageId = messageId.ToString(),
+                Type = messageType,
+                Timestamp = new AmqpTimestamp(
+                    DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            };
+
+            await _channel!.BasicPublishAsync(
+                exchange: _options.ExchangeName,
+                routingKey: messageType,
+                mandatory: true,
+                basicProperties: properties,
+                body: body,
+                cancellationToken: cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            ContentType = "application/json",
-            ContentEncoding = "utf-8",
-            DeliveryMode = DeliveryModes.Persistent,
-            MessageId = messageId.ToString(),
-            Type = messageType,
-            Timestamp = new AmqpTimestamp(
-                DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-        };
-
-        await _channel!.BasicPublishAsync(
-            exchange: _options.ExchangeName,
-            routingKey: messageType,
-            mandatory: false,
-            basicProperties: properties,
-            body: body,
-            cancellationToken: cancellationToken);
+            await ResetConnectionAsync();
+            throw;
+        }
+        finally
+        {
+            _publishLock.Release();
+        }
     }
 
     private async Task EnsureInitializedAsync(
         CancellationToken cancellationToken)
     {
-        if (_channel is not null)
+        if (_channel is { IsOpen: true })
         {
             return;
         }
 
-        await _initializationLock.WaitAsync(cancellationToken);
+        await ResetConnectionAsync();
 
+        var factory = new ConnectionFactory
+        {
+            HostName = _options.HostName,
+            Port = _options.Port,
+            UserName = _options.UserName,
+            Password = _options.Password,
+            AutomaticRecoveryEnabled = true
+        };
+
+        IConnection? connection = null;
+        IChannel? channel = null;
         try
         {
-            if (_channel is not null)
-            {
-                return;
-            }
+            connection = await factory.CreateConnectionAsync(cancellationToken);
 
-            var factory = new ConnectionFactory
-            {
-                HostName = _options.HostName,
-                Port = _options.Port,
-                UserName = _options.UserName,
-                Password = _options.Password
-            };
-
-            _connection = await factory.CreateConnectionAsync(
+            channel = await connection.CreateChannelAsync(
+                new CreateChannelOptions(
+                    publisherConfirmationsEnabled: true,
+                    publisherConfirmationTrackingEnabled: true),
                 cancellationToken);
 
-            _channel = await _connection.CreateChannelAsync(
-                cancellationToken: cancellationToken);
-
-            await _channel.ExchangeDeclareAsync(
+            await channel.ExchangeDeclareAsync(
                 exchange: _options.ExchangeName,
                 type: ExchangeType.Topic,
                 durable: true,
                 autoDelete: false,
                 cancellationToken: cancellationToken);
+
+            _connection = connection;
+            _channel = channel;
         }
-        finally
+        catch
         {
-            _initializationLock.Release();
+            if (channel is not null)
+            {
+                await channel.DisposeAsync();
+            }
+
+            if (connection is not null)
+            {
+                await connection.DisposeAsync();
+            }
+
+            throw;
+        }
+    }
+
+    private async Task ResetConnectionAsync()
+    {
+        var channel = _channel;
+        var connection = _connection;
+        _channel = null;
+        _connection = null;
+
+        if (channel is not null)
+        {
+            try { await channel.DisposeAsync(); }
+            catch { }
+        }
+
+        if (connection is not null)
+        {
+            try { await connection.DisposeAsync(); }
+            catch { }
         }
     }
 
     public async ValueTask DisposeAsync()
     {
-        _initializationLock.Dispose();
-
-        if (_channel is not null)
+        await _publishLock.WaitAsync();
+        try { await ResetConnectionAsync(); }
+        finally
         {
-            await _channel.DisposeAsync();
-        }
-
-        if (_connection is not null)
-        {
-            await _connection.DisposeAsync();
+            _publishLock.Release();
+            _publishLock.Dispose();
         }
     }
 }

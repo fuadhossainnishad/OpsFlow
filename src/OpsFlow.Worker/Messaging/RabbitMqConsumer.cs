@@ -10,19 +10,24 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Microsoft.Extensions.Options;
 using OpsFlow.Application.Abstractions.Notifications;
+using OpsFlow.Worker;
 
 namespace OpsFlow.Worker.Messaging;
 
 public sealed partial class RabbitMqConsumer(
     IOptions<RabbitMqOptions> options,
     OpsFlowDbContext dbContext,
-        INotificationRepository notificationRepository,
-    ILogger<RabbitMqConsumer> logger)
+    INotificationRepository notificationRepository,
+    ILogger<RabbitMqConsumer> logger) : IRabbitMqConsumer
 {
     private readonly RabbitMqOptions _options = options.Value;
 
     private static readonly JsonSerializerOptions JsonOptions =
         new(JsonSerializerDefaults.Web);
+
+    private const string RetryHeader = "x-opsflow-retry-attempt";
+    private const string DeadLetterRoutingKey = "dead-letter";
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(5);
 
     public async Task RunAsync(CancellationToken stoppingToken)
     {
@@ -31,21 +36,74 @@ public sealed partial class RabbitMqConsumer(
             HostName = _options.HostName,
             Port = _options.Port,
             UserName = _options.UserName,
-            Password = _options.Password
+            Password = _options.Password,
+            AutomaticRecoveryEnabled = true
         };
 
         await using var connection =
             await factory.CreateConnectionAsync(stoppingToken);
 
-        await using var channel =
-            await connection.CreateChannelAsync(
-                cancellationToken: stoppingToken);
+        await using var channel = await connection.CreateChannelAsync(
+            new CreateChannelOptions(
+                publisherConfirmationsEnabled: true,
+                publisherConfirmationTrackingEnabled: true),
+            stoppingToken);
 
         await channel.ExchangeDeclareAsync(
             exchange: _options.ExchangeName,
             type: ExchangeType.Topic,
             durable: true,
             autoDelete: false,
+            cancellationToken: stoppingToken);
+
+        var deadLetterExchange = $"{_options.ExchangeName}.dead-letter";
+        var deadLetterQueue = $"{_options.QueueName}.dead-letter";
+        var retryExchange = $"{_options.ExchangeName}.retry";
+        var retryQueue = $"{_options.QueueName}.retry";
+
+        await channel.ExchangeDeclareAsync(
+            exchange: deadLetterExchange,
+            type: ExchangeType.Topic,
+            durable: true,
+            autoDelete: false,
+            cancellationToken: stoppingToken);
+
+        await channel.QueueDeclareAsync(
+            queue: deadLetterQueue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            cancellationToken: stoppingToken);
+
+        await channel.QueueBindAsync(
+            queue: deadLetterQueue,
+            exchange: deadLetterExchange,
+            routingKey: "#",
+            cancellationToken: stoppingToken);
+
+        await channel.ExchangeDeclareAsync(
+            exchange: retryExchange,
+            type: ExchangeType.Topic,
+            durable: true,
+            autoDelete: false,
+            cancellationToken: stoppingToken);
+
+        await channel.QueueDeclareAsync(
+            queue: retryQueue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: new Dictionary<string, object?>
+            {
+                ["x-message-ttl"] = (int)RetryDelay.TotalMilliseconds,
+                ["x-dead-letter-exchange"] = _options.ExchangeName
+            },
+            cancellationToken: stoppingToken);
+
+        await channel.QueueBindAsync(
+            queue: retryQueue,
+            exchange: retryExchange,
+            routingKey: "#",
             cancellationToken: stoppingToken);
 
         await channel.QueueDeclareAsync(
@@ -68,17 +126,25 @@ public sealed partial class RabbitMqConsumer(
             cancellationToken: stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
+        using var deliveryLock = new SemaphoreSlim(1, 1);
 
         consumer.ReceivedAsync += async (_, args) =>
         {
+            var lockTaken = false;
             try
             {
+                await deliveryLock.WaitAsync(stoppingToken);
+                lockTaken = true;
                 await ProcessMessageAsync(args, stoppingToken);
 
                 await channel.BasicAckAsync(
                     deliveryTag: args.DeliveryTag,
                     multiple: false,
                     cancellationToken: stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // Leave in-flight deliveries unacknowledged; closing the channel redelivers them.
             }
             catch (Exception exception) when (
                 exception is not OperationCanceledException)
@@ -87,15 +153,38 @@ public sealed partial class RabbitMqConsumer(
                     args.RoutingKey,
                     exception);
 
-                await channel.BasicNackAsync(
-                    deliveryTag: args.DeliveryTag,
-                    multiple: false,
-                    requeue: true,
-                    cancellationToken: stoppingToken);
+                try
+                {
+                    await RouteFailedDeliveryAsync(
+                        channel,
+                        args,
+                        exception,
+                        stoppingToken);
+
+                    await channel.BasicAckAsync(
+                        deliveryTag: args.DeliveryTag,
+                        multiple: false,
+                        cancellationToken: stoppingToken);
+                }
+                catch (Exception republishException) when (
+                    republishException is not OperationCanceledException)
+                {
+                    LogFailedDeliveryRouting(args.RoutingKey, republishException);
+                    await channel.BasicNackAsync(
+                        deliveryTag: args.DeliveryTag,
+                        multiple: false,
+                        requeue: true,
+                        cancellationToken: stoppingToken);
+                }
+            }
+            finally
+            {
+                if (lockTaken)
+                    deliveryLock.Release();
             }
         };
 
-        await channel.BasicConsumeAsync(
+        var consumerTag = await channel.BasicConsumeAsync(
             queue: _options.QueueName,
             autoAck: false,
             consumer: consumer,
@@ -103,9 +192,95 @@ public sealed partial class RabbitMqConsumer(
 
         LogConsumerStarted(_options.QueueName);
 
-        await Task.Delay(
-            Timeout.InfiniteTimeSpan,
-            stoppingToken);
+        try
+        {
+            await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            if (channel.IsOpen)
+            {
+                await channel.BasicCancelAsync(
+                    consumerTag,
+                    noWait: false,
+                    cancellationToken: CancellationToken.None);
+            }
+
+            await deliveryLock.WaitAsync(CancellationToken.None);
+            deliveryLock.Release();
+        }
+    }
+
+    private async Task RouteFailedDeliveryAsync(
+        IChannel channel,
+        BasicDeliverEventArgs args,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        var attempts = GetRetryAttempt(args.BasicProperties.Headers);
+        var properties = CopyProperties(args.BasicProperties);
+
+        if (RabbitMqDeliveryRetryPolicy.ShouldDeadLetter(attempts))
+        {
+            await channel.BasicPublishAsync(
+                exchange: $"{_options.ExchangeName}.dead-letter",
+                routingKey: DeadLetterRoutingKey,
+                mandatory: true,
+                basicProperties: properties,
+                body: args.Body,
+                cancellationToken: cancellationToken);
+
+            LogDeliveryDeadLettered(args.RoutingKey, attempts + 1, exception);
+            return;
+        }
+
+        properties.Headers ??= new Dictionary<string, object?>();
+        properties.Headers[RetryHeader] =
+            RabbitMqDeliveryRetryPolicy.NextAttempt(attempts);
+        properties.Expiration = ((int)RetryDelay.TotalMilliseconds)
+            .ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        await channel.BasicPublishAsync(
+            exchange: $"{_options.ExchangeName}.retry",
+            routingKey: args.RoutingKey,
+            mandatory: true,
+            basicProperties: properties,
+            body: args.Body,
+            cancellationToken: cancellationToken);
+    }
+
+    private static int GetRetryAttempt(IDictionary<string, object?>? headers)
+    {
+        if (headers is null || !headers.TryGetValue(RetryHeader, out var value))
+            return 0;
+
+        return value switch
+        {
+            byte attempt => attempt,
+            short attempt => attempt,
+            int attempt => attempt,
+            long attempt when attempt <= int.MaxValue => (int)attempt,
+            byte[] bytes when int.TryParse(
+                Encoding.UTF8.GetString(bytes),
+                out var attempt) => attempt,
+            _ => 0
+        };
+    }
+
+    private static BasicProperties CopyProperties(IReadOnlyBasicProperties source)
+    {
+        return new BasicProperties
+        {
+            ContentType = source.ContentType,
+            ContentEncoding = source.ContentEncoding,
+            DeliveryMode = source.DeliveryMode,
+            MessageId = source.MessageId,
+            Type = source.Type,
+            Timestamp = source.Timestamp,
+            Headers = source.Headers is null
+                ? new Dictionary<string, object?>()
+                : new Dictionary<string, object?>(source.Headers)
+        };
     }
 
     private async Task ProcessMessageAsync(
@@ -222,6 +397,23 @@ public sealed partial class RabbitMqConsumer(
         Level = LogLevel.Error,
         Message = "RabbitMQ message processing failed for routing key {RoutingKey}")]
     private partial void LogMessageProcessingFailed(
+        string routingKey,
+        Exception exception);
+
+    [LoggerMessage(
+        EventId = 2003,
+        Level = LogLevel.Warning,
+        Message = "RabbitMQ message dead-lettered after {Attempt} attempts: {RoutingKey}")]
+    private partial void LogDeliveryDeadLettered(
+        string routingKey,
+        int attempt,
+        Exception exception);
+
+    [LoggerMessage(
+        EventId = 2004,
+        Level = LogLevel.Error,
+        Message = "Failed to route RabbitMQ delivery for {RoutingKey}; original delivery will be requeued")]
+    private partial void LogFailedDeliveryRouting(
         string routingKey,
         Exception exception);
 }
