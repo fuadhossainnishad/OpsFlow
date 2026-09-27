@@ -91,4 +91,32 @@ public sealed class MembershipTests
 
         membership.IsActive.Should().BeFalse();
     }
+    [Fact]
+    public void ChangeRoleShouldRejectEmptyRoleId()
+    {
+        var membership = Membership.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid());
+
+        var action = () => membership.ChangeRole(Guid.Empty);
+
+        action.Should()
+            .Throw<ArgumentException>()
+            .WithMessage("*Role ID*");
+    }
+
+    [Fact]
+    public void ActivateShouldMakeMembershipActive()
+    {
+        var membership = Membership.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid());
+
+        membership.Deactivate();
+        membership.Activate();
+
+        membership.IsActive.Should().BeTrue();
+    }
 }

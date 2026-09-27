@@ -36,6 +36,34 @@ public sealed class UserTests
             .Throw<ArgumentException>();
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void CreateShouldRejectEmptyFirstName(string firstName)
+    {
+        var action = () => User.Create(
+            "fuad@example.com",
+            firstName,
+            "Hossain");
+
+        action.Should()
+            .Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void CreateShouldRejectEmptyLastName(string lastName)
+    {
+        var action = () => User.Create(
+            "fuad@example.com",
+            "Fuad",
+            lastName);
+
+        action.Should()
+            .Throw<ArgumentException>();
+    }
+
     [Fact]
     public void DeactivateShouldMakeUserInactive()
     {

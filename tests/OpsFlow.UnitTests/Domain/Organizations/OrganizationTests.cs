@@ -54,5 +54,28 @@ public sealed class OrganizationTests
         action.Should()
             .Throw<ArgumentException>();
     }
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void CreateShouldRejectBlankSlug(string slug)
+    {
+        var action = () => Organization.Create(
+            "OpsFlow Inc.",
+            slug);
+
+        action.Should()
+            .Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void CreateShouldTrimName()
+    {
+        var organization = Organization.Create(
+            "  OpsFlow Inc.  ",
+            "opsflow");
+
+        organization.Name.Should().Be("OpsFlow Inc.");
+    }
+
 }
 
