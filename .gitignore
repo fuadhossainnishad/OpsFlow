@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Runtime file storage
+src/OpsFlow.Api/storage/
