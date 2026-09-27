@@ -5,10 +5,10 @@
 - API/auth hardening — validated JWT configuration at startup, required authentication by default for API routes, explicitly kept registration/login anonymous, and added invalid bearer-token coverage. Focused integration tests passed (5/5).
 
 ## Current
-- API/auth hardening — committed locally; push status pending.
+- No active milestone.
 
 ## Next
-- Confirm API/auth hardening push, then inspect the next repository milestone.
+- Inspect repository roadmap/current checkpoint for the next milestone.
 
 ## Rule
 After every milestone, update this file.
