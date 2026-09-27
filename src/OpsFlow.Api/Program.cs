@@ -61,6 +61,10 @@ builder.Services
 
 builder.Services.AddAuthorization(options =>
 {
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+
     foreach (var permission in PermissionCodes.All)
     {
         options.AddPolicy(

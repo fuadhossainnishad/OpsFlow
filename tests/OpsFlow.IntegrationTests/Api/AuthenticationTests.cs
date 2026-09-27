@@ -117,6 +117,21 @@ public sealed class AuthenticationTests : IClassFixture<OpsFlowWebApplicationFac
         Assert.Equal(login.UserId, body.UserId);
     }
 
+    [Fact]
+    public async Task MeShouldRejectInvalidBearerToken()
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "/api/v1/auth/me");
+
+        request.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", "not-a-valid-token");
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private async Task<RegisterUserResponse> RegisterAsync(
         string email,
         string password)

@@ -14,6 +14,7 @@ public sealed class AuthController(
     LoginUserHandler loginUserHandler,
     ICurrentUser currentUser) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost("register")]
     [ProducesResponseType(
         typeof(RegisterUserResponse),
@@ -49,6 +50,7 @@ public sealed class AuthController(
             response);
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(
         typeof(LoginUserResponse),

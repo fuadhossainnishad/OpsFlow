@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using System.Text;
 using OpsFlow.Application.Abstractions.Messaging;
 using OpsFlow.Application.Abstractions.Notifications;
 using OpsFlow.Application.Abstractions.Files;
@@ -82,8 +83,21 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<RegisterUserHandler>();
 
-        services.Configure<JwtOptions>(
-            configuration.GetSection(JwtOptions.SectionName));
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.Issuer),
+                "JWT issuer must be configured.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.Audience),
+                "JWT audience must be configured.")
+            .Validate(
+                options => Encoding.UTF8.GetByteCount(options.SigningKey ?? string.Empty) >= 32,
+                "JWT signing key must contain at least 32 UTF-8 bytes.")
+            .Validate(
+                options => options.AccessTokenLifetimeMinutes > 0,
+                "JWT access token lifetime must be greater than zero.")
+            .ValidateOnStart();
 
         services.AddScoped<IAccessTokenService, AccessTokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
