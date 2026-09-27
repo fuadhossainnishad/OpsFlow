@@ -1,6 +1,7 @@
 using OpsFlow.Application.Abstractions.Auditing;
 using OpsFlow.Application.Abstractions.Authorization;
 using OpsFlow.Application.Abstractions.Tenancy;
+using OpsFlow.Application.Common.Exceptions;
 using OpsFlow.Application.Abstractions.Files;
 using OpsFlow.Application.Abstractions.Identity;
 using OpsFlow.Application.Abstractions.Persistence;
@@ -25,7 +26,7 @@ public sealed class DeleteFileHandler(
             cancellationToken);
 
         if (file is null)
-            throw new KeyNotFoundException("File was not found.");
+            throw new NotFoundException("File was not found.");
 
         await storage.DeleteAsync(file.StorageKey, cancellationToken);
         await repository.DeleteAsync(file, cancellationToken);

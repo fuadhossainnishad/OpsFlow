@@ -1,6 +1,7 @@
 using OpsFlow.Application.Abstractions.Files;
 using OpsFlow.Application.Abstractions.Authorization;
 using OpsFlow.Application.Abstractions.Tenancy;
+using OpsFlow.Application.Common.Exceptions;
 
 namespace OpsFlow.Application.Features.Files.GetFile;
 
@@ -19,14 +20,14 @@ public sealed class GetFileHandler(
             cancellationToken);
 
         if (file is null)
-            throw new KeyNotFoundException("File was not found.");
+            throw new NotFoundException("File was not found.");
 
         var stream = await storage.OpenReadAsync(
             file.StorageKey,
             cancellationToken);
 
         if (stream is null)
-            throw new KeyNotFoundException("Stored file was not found.");
+            throw new NotFoundException("Stored file was not found.");
 
         return (
             stream,
