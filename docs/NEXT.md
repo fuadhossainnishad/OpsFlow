@@ -13,12 +13,13 @@
 - API rate-limiting assessment — confirmed there is no API deployment/ingress topology or trusted-proxy configuration in the repository; documented why rate limits are deferred until client-address trust and instance sharing are defined, with registration/login as initial candidates.
 - OpenAPI bearer authentication and operation errors — described JWT bearer security on non-anonymous operations and added Problem Details response metadata for handler-backed 404/409 failures; updated the OpenAPI reference.
 - API versioning and deprecation review — documented the existing `/api/v1` route convention, compatibility expectations, and the migration information required before a version is retired. Deferred adding versioning infrastructure until a second API version is approved.
+- OpenAPI contract verification — added focused integration coverage for JWT bearer scheme metadata, anonymous registration/login, protected operations, declared 400/401/409 responses, and Problem Details on authenticated unmatched routes. Focused integration tests passed (2/2).
 
 ## Current
 - No active milestone.
 
 ## Next
-- Add focused API contract verification for OpenAPI security requirements and Problem Details response metadata, continuing Phase 3 API hardening.
+- Review liveness and readiness health-check scope for the API and its dependencies, beginning Phase 4 observability work.
 
 ## Rule
 After every milestone, update this file.

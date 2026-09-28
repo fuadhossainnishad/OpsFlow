@@ -2,7 +2,9 @@
 
 The API uses ASP.NET Core's built-in OpenAPI generator. In Development, the
 document is available at `GET /openapi/v1.json`. OpenAPI is not currently
-mapped in other environments. The document describes the controller routes;
+mapped in other environments and the Development document endpoint allows
+anonymous access. Keep it disabled in deployed environments unless publishing
+the API schema there is an explicit decision. The document describes the controller routes;
 success response schemas are inferred from action return types and explicit
 `ProducesResponseType` metadata.
 

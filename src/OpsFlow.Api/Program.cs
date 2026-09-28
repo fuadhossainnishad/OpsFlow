@@ -26,7 +26,9 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer((document, _, _) =>
     {
         document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        var components = document.Components;
+        components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
         {
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
@@ -48,14 +50,7 @@ builder.Services.AddOpenApi(options =>
         operation.Security ??= [];
         operation.Security.Add(new OpenApiSecurityRequirement
         {
-            [new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            }] = []
+            [new OpenApiSecuritySchemeReference("Bearer", context.Document, null)] = []
         });
 
         return Task.CompletedTask;
@@ -145,7 +140,7 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
 app.UseExceptionHandler();

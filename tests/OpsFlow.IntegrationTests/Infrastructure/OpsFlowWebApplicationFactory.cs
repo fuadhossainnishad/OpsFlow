@@ -9,12 +9,16 @@ namespace OpsFlow.IntegrationTests.Infrastructure;
 
 public sealed class OpsFlowWebApplicationFactory : WebApplicationFactory<Program>
 {
+    private bool _enableOpenApi;
+
     private const string ConnectionString =
         "Server=localhost,1433;Database=OpsFlowIntegrationDb;User Id=sa;Password=OpsFlow_Local_Sql;TrustServerCertificate=True;";
 
+    public void EnableOpenApi() => _enableOpenApi = true;
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Testing");
+        builder.UseEnvironment(_enableOpenApi ? "Development" : "Testing");
 
 
         builder.ConfigureAppConfiguration((_, configuration) =>
