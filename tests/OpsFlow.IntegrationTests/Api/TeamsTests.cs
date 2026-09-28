@@ -32,12 +32,15 @@ public sealed class TeamsTests(
                 description = "Platform engineering"
             });
 
-        createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var created =
             await createResponse.Content.ReadFromJsonAsync<TeamResponse>();
 
         created.Should().NotBeNull();
+        createResponse.Headers.Location.Should().NotBeNull();
+        createResponse.Headers.Location!.ToString()
+            .Should().Contain($"/api/v1/teams/{created!.TeamId}");
 
         var getResponse = await SendAsync(
             HttpMethod.Get,
@@ -117,7 +120,7 @@ public sealed class TeamsTests(
                 description = (string?)null
             });
 
-        first.StatusCode.Should().Be(HttpStatusCode.OK);
+        first.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var second = await SendAsync(
             HttpMethod.Post,

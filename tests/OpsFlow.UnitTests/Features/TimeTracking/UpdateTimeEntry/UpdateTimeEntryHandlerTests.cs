@@ -4,6 +4,7 @@ using OpsFlow.Application.Abstractions.Persistence;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Application.Common.Exceptions;
 using OpsFlow.Application.Features.TimeTracking;
+using OpsFlow.Application.Features.TimeTracking.ListTimeEntries;
 using OpsFlow.Application.Features.TimeTracking.UpdateTimeEntry;
 using OpsFlow.Domain.Tasks;
 using OpsFlow.Domain.TimeTracking;
@@ -410,6 +411,10 @@ public sealed class UpdateTimeEntryHandlerTests
             Guid? taskId,
             DateTimeOffset? fromUtc,
             DateTimeOffset? toUtc,
+            int skip,
+            int take,
+            TimeEntrySortField sortBy,
+            TimeEntrySortOrder sortOrder,
             CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<TimeEntryRecord>>([]);
 

@@ -274,6 +274,8 @@ Do not create documentation merely for volume.
 
 When implementation changes architecture, security, public APIs, database design, or an important engineering decision, update the relevant documentation or ADR.
 
+When an API feature or contract is complete, document its endpoint, authorization and tenant requirements, request/query parameters, response/error shape, and a manual test example under `docs/api/`. Link the reference from `docs/api/README.md` and `docs/README.md`.
+
 Do not document speculative functionality as implemented.
 
 Clearly distinguish:

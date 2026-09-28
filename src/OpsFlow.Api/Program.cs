@@ -16,13 +16,22 @@ using Microsoft.IdentityModel.Tokens;
 using OpsFlow.Infrastructure.Security;
 using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Api.Endpoints.Tasks;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
-builder.Services.AddProblemDetails();
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Instance ??= context.HttpContext.Request.Path;
+        context.ProblemDetails.Extensions["traceId"] =
+            context.HttpContext.TraceIdentifier;
+    };
+});
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -100,6 +109,30 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
+app.UseStatusCodePages(async statusCodeContext =>
+{
+    var httpContext = statusCodeContext.HttpContext;
+    await httpContext.RequestServices
+        .GetRequiredService<IProblemDetailsService>()
+        .TryWriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = httpContext,
+            ProblemDetails = new ProblemDetails
+            {
+                Status = httpContext.Response.StatusCode,
+                Title = httpContext.Response.StatusCode switch
+                {
+                    StatusCodes.Status400BadRequest => "Bad Request",
+                    StatusCodes.Status401Unauthorized => "Unauthorized",
+                    StatusCodes.Status403Forbidden => "Forbidden",
+                    StatusCodes.Status404NotFound => "Not Found",
+                    StatusCodes.Status405MethodNotAllowed => "Method Not Allowed",
+                    StatusCodes.Status409Conflict => "Conflict",
+                    _ => "Request failed"
+                }
+            }
+        });
+});
 
 app.UseHttpsRedirection();
 

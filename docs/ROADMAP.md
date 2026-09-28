@@ -103,6 +103,11 @@ Potential work:
 - API integration-test expansion
 - rate limiting where appropriate
 
+Rate limiting remains under consideration. The current deployment files do not
+define an API ingress or trusted proxy topology; see
+[`security/rate-limiting.md`](security/rate-limiting.md) for the assessment and
+prerequisites before enabling enforcement.
+
 ---
 
 # Phase 4 — Observability

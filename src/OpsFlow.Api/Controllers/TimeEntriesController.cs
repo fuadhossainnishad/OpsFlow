@@ -13,6 +13,10 @@ namespace OpsFlow.Api.Controllers;
 [ApiController]
 [Route("api/v1/time-entries")]
 [Authorize]
+[ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class TimeEntriesController(
     CreateTimeEntryHandler createTimeEntryHandler,
     ListTimeEntriesHandler listTimeEntriesHandler,
@@ -42,13 +46,21 @@ public sealed class TimeEntriesController(
         [FromQuery] Guid? taskId,
         [FromQuery] DateTimeOffset? fromUtc,
         [FromQuery] DateTimeOffset? toUtc,
-        CancellationToken cancellationToken)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] TimeEntrySortField sortBy = TimeEntrySortField.StartedAtUtc,
+        [FromQuery] TimeEntrySortOrder sortOrder = TimeEntrySortOrder.Desc,
+        CancellationToken cancellationToken = default)
         => Ok(await listTimeEntriesHandler.HandleAsync(
             new ListTimeEntriesQuery(
                 projectId,
                 taskId,
                 fromUtc,
-                toUtc),
+                toUtc,
+                page,
+                pageSize,
+                sortBy,
+                sortOrder),
             cancellationToken));
 
     [HttpGet("{timeEntryId:guid}")]

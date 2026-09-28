@@ -20,6 +20,9 @@ public sealed class AuthController(
         typeof(RegisterUserResponse),
         StatusCodes.Status201Created)]
     [ProducesResponseType(
+        typeof(ValidationProblemDetails),
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
         typeof(ProblemDetails),
         StatusCodes.Status409Conflict)]
     [ProducesResponseType(
@@ -56,6 +59,9 @@ public sealed class AuthController(
         typeof(LoginUserResponse),
         StatusCodes.Status200OK)]
     [ProducesResponseType(
+        typeof(ValidationProblemDetails),
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
         typeof(ProblemDetails),
         StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(
@@ -85,6 +91,9 @@ public sealed class AuthController(
     [HttpGet("me")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(
+        typeof(ProblemDetails),
+        StatusCodes.Status500InternalServerError)]
     public ActionResult<object> GetCurrentUser()
     {
         return Ok(new

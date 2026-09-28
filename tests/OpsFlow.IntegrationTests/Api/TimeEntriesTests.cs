@@ -470,6 +470,93 @@ public sealed class TimeEntriesTests(
         result.Items[0].Description.Should().Be("Backend work");
     }
 
+    [Fact]
+    public async Task TimeEntryListCanBePaged()
+    {
+        var owner = await RegisterAndLoginAsync(
+            $"owner-page-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var organization = await CreateOrganizationAsync(
+            owner.AccessToken,
+            "Time Pagination Organization");
+
+        var project = await CreateProjectAsync(
+            owner.AccessToken,
+            organization.OrganizationId,
+            "Pagination Project",
+            "PAGE");
+
+        var startedAt = DateTimeOffset.UtcNow.AddDays(-1);
+        await CreateManualTimeEntryAsync(
+            owner,
+            organization.OrganizationId,
+            project.ProjectId,
+            "Earlier entry",
+            startedAt,
+            startedAt.AddMinutes(30));
+        await CreateManualTimeEntryAsync(
+            owner,
+            organization.OrganizationId,
+            project.ProjectId,
+            "Later entry",
+            startedAt.AddHours(1),
+            startedAt.AddHours(1).AddMinutes(30));
+
+        var firstPageResponse = await SendAsync(
+            HttpMethod.Get,
+            "/api/v1/time-entries?page=1&pageSize=1",
+            owner.AccessToken,
+            organization.OrganizationId);
+
+        firstPageResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var firstPage = await firstPageResponse.Content
+            .ReadFromJsonAsync<TimeEntryListResponse>();
+        firstPage.Should().NotBeNull();
+        firstPage!.Page.Should().Be(1);
+        firstPage.PageSize.Should().Be(1);
+        firstPage.HasNextPage.Should().BeTrue();
+        firstPage.Items.Should().ContainSingle();
+        firstPage.Items[0].Description.Should().Be("Later entry");
+
+        var secondPageResponse = await SendAsync(
+            HttpMethod.Get,
+            "/api/v1/time-entries?page=2&pageSize=1",
+            owner.AccessToken,
+            organization.OrganizationId);
+
+        secondPageResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var secondPage = await secondPageResponse.Content
+            .ReadFromJsonAsync<TimeEntryListResponse>();
+        secondPage.Should().NotBeNull();
+        secondPage!.Page.Should().Be(2);
+        secondPage.PageSize.Should().Be(1);
+        secondPage.HasNextPage.Should().BeFalse();
+        secondPage.Items.Should().ContainSingle();
+        secondPage.Items[0].Description.Should().Be("Earlier entry");
+
+        var ascendingResponse = await SendAsync(
+            HttpMethod.Get,
+            "/api/v1/time-entries?sortBy=startedAtUtc&sortOrder=asc&pageSize=2",
+            owner.AccessToken,
+            organization.OrganizationId);
+
+        ascendingResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var ascending = await ascendingResponse.Content
+            .ReadFromJsonAsync<TimeEntryListResponse>();
+        ascending.Should().NotBeNull();
+        ascending!.Items.Select(item => item.Description)
+            .Should().Equal("Earlier entry", "Later entry");
+
+        var invalidSortResponse = await SendAsync(
+            HttpMethod.Get,
+            "/api/v1/time-entries?sortBy=notAField",
+            owner.AccessToken,
+            organization.OrganizationId);
+
+        invalidSortResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     private async Task<AuthResult> RegisterAndLoginAsync(
         string email,
         string password)
@@ -721,7 +808,10 @@ public sealed class TimeEntriesTests(
         DateTimeOffset? UpdatedAtUtc);
 
     private sealed record TimeEntryListResponse(
-        IReadOnlyList<TimeEntryResponse> Items);
+        IReadOnlyList<TimeEntryResponse> Items,
+        int Page,
+        int PageSize,
+        bool HasNextPage);
 
     private sealed record InvitationResponse(
         Guid InvitationId,

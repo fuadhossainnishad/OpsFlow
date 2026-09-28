@@ -11,6 +11,10 @@ namespace OpsFlow.Api.Controllers;
 [ApiController]
 [Route("api/v1/files")]
 [Authorize]
+[ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class FilesController(
     UploadFileHandler uploadFileHandler,
     ListFilesHandler listFilesHandler,
@@ -20,6 +24,7 @@ public sealed class FilesController(
     [HttpPost]
     [Authorize(Policy = PermissionCodes.FilesCreate)]
     [RequestSizeLimit(26 * 1024 * 1024)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status413PayloadTooLarge)]
     public async Task<ActionResult<UploadFileResult>> Upload(
         IFormFile file,
         CancellationToken cancellationToken)

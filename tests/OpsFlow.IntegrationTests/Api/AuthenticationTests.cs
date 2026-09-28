@@ -46,6 +46,22 @@ public sealed class AuthenticationTests : IClassFixture<OpsFlowWebApplicationFac
     }
 
     [Fact]
+    public async Task RegisterShouldRejectMalformedEmail()
+    {
+        var request = new RegisterUserRequest(
+            "not-an-email",
+            "Integration",
+            "User",
+            "StrongPassword123!");
+
+        using var response = await _client.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task LoginShouldReturnAccessAndRefreshTokens()
     {
         var email = $"login-{Guid.NewGuid():N}@opsflow.test";
@@ -80,6 +96,16 @@ public sealed class AuthenticationTests : IClassFixture<OpsFlowWebApplicationFac
             new LoginUserRequest(email, "WrongPassword123!"));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task LoginShouldRejectMalformedEmail()
+    {
+        using var response = await _client.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new LoginUserRequest("not-an-email", "AnyPassword123!"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

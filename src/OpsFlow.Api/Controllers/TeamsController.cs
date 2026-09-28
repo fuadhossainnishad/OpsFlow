@@ -16,6 +16,10 @@ namespace OpsFlow.Api.Controllers;
 [ApiController]
 [Route("api/v1/teams")]
 [Authorize]
+[ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class TeamsController(
     CreateTeamHandler createTeamHandler,
     ListTeamsHandler listTeamsHandler,
@@ -31,9 +35,16 @@ public sealed class TeamsController(
     public async Task<ActionResult<CreateTeamResult>> Create(
         CreateTeamRequest request,
         CancellationToken cancellationToken)
-        => Ok(await createTeamHandler.Handle(
+    {
+        var result = await createTeamHandler.Handle(
             new CreateTeamCommand(request.Name, request.Description),
-            cancellationToken));
+            cancellationToken);
+
+        return CreatedAtAction(
+            nameof(Get),
+            new { teamId = result.TeamId },
+            result);
+    }
 
     [HttpGet]
     [Authorize(Policy = PermissionCodes.TeamsRead)]

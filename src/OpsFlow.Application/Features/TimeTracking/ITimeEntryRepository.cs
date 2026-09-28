@@ -1,4 +1,5 @@
 using OpsFlow.Domain.TimeTracking;
+using OpsFlow.Application.Features.TimeTracking.ListTimeEntries;
 
 namespace OpsFlow.Application.Features.TimeTracking;
 
@@ -19,6 +20,10 @@ public interface ITimeEntryRepository
         Guid? taskId,
         DateTimeOffset? fromUtc,
         DateTimeOffset? toUtc,
+        int skip,
+        int take,
+        TimeEntrySortField sortBy,
+        TimeEntrySortOrder sortOrder,
         CancellationToken cancellationToken);
 
     Task<bool> HasRunningEntryAsync(

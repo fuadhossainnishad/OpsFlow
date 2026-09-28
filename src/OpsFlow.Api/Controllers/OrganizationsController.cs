@@ -17,11 +17,20 @@ public sealed class OrganizationsController(
         typeof(CreateOrganizationResponse),
         StatusCodes.Status201Created)]
     [ProducesResponseType(
+        typeof(ValidationProblemDetails),
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
         typeof(ProblemDetails),
         StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(
         typeof(ProblemDetails),
         StatusCodes.Status409Conflict)]
+    [ProducesResponseType(
+        typeof(ProblemDetails),
+        StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(
+        typeof(ProblemDetails),
+        StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<CreateOrganizationResponse>> Create(
         CreateOrganizationRequest request,
         CancellationToken cancellationToken)

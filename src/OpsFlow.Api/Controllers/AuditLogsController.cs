@@ -8,6 +8,10 @@ namespace OpsFlow.Api.Controllers;
 [ApiController]
 [Route("api/v1/audit-logs")]
 [Authorize]
+[ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public sealed class AuditLogsController(
     ListAuditLogsHandler listAuditLogsHandler) : ControllerBase
 {

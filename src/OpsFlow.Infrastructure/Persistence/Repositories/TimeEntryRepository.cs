@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OpsFlow.Application.Features.TimeTracking;
+using OpsFlow.Application.Features.TimeTracking.ListTimeEntries;
 using OpsFlow.Domain.TimeTracking;
 
 namespace OpsFlow.Infrastructure.Persistence.Repositories;
@@ -33,8 +34,13 @@ public sealed class TimeEntryRepository(
         Guid? taskId,
         DateTimeOffset? fromUtc,
         DateTimeOffset? toUtc,
+        int skip,
+        int take,
+        TimeEntrySortField sortBy,
+        TimeEntrySortOrder sortOrder,
         CancellationToken cancellationToken)
-        => await dbContext.TimeEntries
+    {
+        var query = dbContext.TimeEntries
             .AsNoTracking()
             .Where(entry =>
                 entry.OrganizationId == organizationId &&
@@ -42,8 +48,24 @@ public sealed class TimeEntryRepository(
                 (!projectId.HasValue || entry.ProjectId == projectId.Value) &&
                 (!taskId.HasValue || entry.TaskId == taskId.Value) &&
                 (!fromUtc.HasValue || entry.StartedAtUtc >= fromUtc.Value) &&
-                (!toUtc.HasValue || entry.StartedAtUtc < toUtc.Value))
-            .OrderByDescending(entry => entry.StartedAtUtc)
+                (!toUtc.HasValue || entry.StartedAtUtc < toUtc.Value));
+
+        query = (sortBy, sortOrder) switch
+        {
+            (TimeEntrySortField.StartedAtUtc, TimeEntrySortOrder.Asc) =>
+                query.OrderBy(entry => entry.StartedAtUtc).ThenBy(entry => entry.Id),
+            (TimeEntrySortField.StartedAtUtc, TimeEntrySortOrder.Desc) =>
+                query.OrderByDescending(entry => entry.StartedAtUtc).ThenByDescending(entry => entry.Id),
+            (TimeEntrySortField.CreatedAtUtc, TimeEntrySortOrder.Asc) =>
+                query.OrderBy(entry => entry.CreatedAtUtc).ThenBy(entry => entry.Id),
+            (TimeEntrySortField.CreatedAtUtc, TimeEntrySortOrder.Desc) =>
+                query.OrderByDescending(entry => entry.CreatedAtUtc).ThenByDescending(entry => entry.Id),
+            _ => query.OrderByDescending(entry => entry.StartedAtUtc).ThenByDescending(entry => entry.Id)
+        };
+
+        return await query
+            .Skip(skip)
+            .Take(take)
             .Select(entry => new TimeEntryRecord(
                 entry.Id,
                 entry.OrganizationId,
@@ -58,6 +80,7 @@ public sealed class TimeEntryRepository(
                 entry.CreatedAtUtc,
                 entry.UpdatedAtUtc))
             .ToListAsync(cancellationToken);
+    }
 
     public Task<bool> HasRunningEntryAsync(
         Guid organizationId,

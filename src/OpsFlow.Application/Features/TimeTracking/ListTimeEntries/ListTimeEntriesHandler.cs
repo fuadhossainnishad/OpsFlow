@@ -14,6 +14,14 @@ public sealed class ListTimeEntriesHandler(
     {
         ArgumentNullException.ThrowIfNull(query);
 
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+
+        if (!Enum.IsDefined(query.SortBy) || !Enum.IsDefined(query.SortOrder))
+        {
+            throw new ArgumentException("Unsupported time-entry sort option.");
+        }
+
         var organizationId =
             await tenantContext.GetOrganizationIdAsync(cancellationToken);
 
@@ -24,8 +32,18 @@ public sealed class ListTimeEntriesHandler(
             query.TaskId,
             query.FromUtc,
             query.ToUtc,
+            (int)Math.Min((long)(page - 1) * pageSize, int.MaxValue),
+            pageSize + 1,
+            query.SortBy,
+            query.SortOrder,
             cancellationToken);
 
-        return new ListTimeEntriesResult(items);
+        var hasNextPage = items.Count > pageSize;
+
+        return new ListTimeEntriesResult(
+            items.Take(pageSize).ToArray(),
+            page,
+            pageSize,
+            hasNextPage);
     }
 }

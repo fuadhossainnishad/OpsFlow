@@ -22,6 +22,10 @@ Contains system architecture, layer boundaries, modules, data flow, and other st
 
 Contains HTTP/API conventions, contracts, error handling, authorization, and API-specific guidance.
 
+- [API reference](api/README.md)
+- [API error response contract](api/errors.md)
+- [OpenAPI guidance](api/openapi.md)
+
 ### Database
 
 `database/`
@@ -33,6 +37,8 @@ Contains persistence architecture, schema strategy, tenancy, concurrency, migrat
 `security/`
 
 Contains authentication, authorization, tenant isolation, secrets, threat considerations, and security engineering guidance.
+
+- [API rate-limiting assessment](security/rate-limiting.md)
 
 ### ADRs
 

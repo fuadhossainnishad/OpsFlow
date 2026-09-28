@@ -18,6 +18,31 @@ public sealed class MembershipInvitationTests
     }
 
     [Fact]
+    public async Task OwnerCannotInviteMalformedEmailAddress()
+    {
+        var owner = await RegisterAndLoginAsync(
+            $"owner-invalid-invite-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var organization = await CreateOrganizationAsync(
+            owner.AccessToken,
+            "Invalid Invitation Organization");
+
+        var response = await SendAsync(
+            HttpMethod.Post,
+            "/api/v1/members/invitations",
+            owner.AccessToken,
+            organization.OrganizationId,
+            new
+            {
+                email = "not-an-email",
+                roleName = "Member"
+            });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task OwnerCanInviteUserAndUserCanAcceptInvitation()
     {
         var ownerEmail =
