@@ -29,6 +29,8 @@ public sealed class ApprovalsController(
 {
     [HttpPost]
     [Authorize(Policy = PermissionCodes.ApprovalsCreate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CreateApprovalResult>> Create(
         CreateApprovalRequest request,
         CancellationToken cancellationToken)
@@ -48,6 +50,7 @@ public sealed class ApprovalsController(
 
     [HttpGet("{approvalId:guid}")]
     [Authorize(Policy = PermissionCodes.ApprovalsRead)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GetApprovalResult>> Get(
         Guid approvalId,
         CancellationToken cancellationToken)
@@ -57,6 +60,8 @@ public sealed class ApprovalsController(
 
     [HttpPost("{approvalId:guid}/approve")]
     [Authorize(Policy = PermissionCodes.ApprovalsApprove)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Approve(
         Guid approvalId,
         ApprovalDecisionRequest request,
@@ -71,6 +76,8 @@ public sealed class ApprovalsController(
 
     [HttpPost("{approvalId:guid}/reject")]
     [Authorize(Policy = PermissionCodes.ApprovalsReject)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Reject(
         Guid approvalId,
         ApprovalDecisionRequest request,
@@ -85,6 +92,8 @@ public sealed class ApprovalsController(
 
     [HttpPost("{approvalId:guid}/cancel")]
     [Authorize(Policy = PermissionCodes.ApprovalsCancel)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Cancel(
         Guid approvalId,
         CancellationToken cancellationToken)

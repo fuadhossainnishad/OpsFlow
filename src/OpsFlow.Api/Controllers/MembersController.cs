@@ -41,6 +41,8 @@ public sealed class MembersController(
 
     [HttpPost("invitations")]
     [Authorize(Policy = PermissionCodes.MembersInvite)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InviteMemberResponse>> Invite(
         InviteMemberRequest request,
         CancellationToken cancellationToken)
@@ -61,6 +63,8 @@ public sealed class MembersController(
     }
 
     [HttpPost("invitations/accept")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AcceptInvitationResponse>> Accept(
         AcceptInvitationRequest request,
         CancellationToken cancellationToken)
@@ -78,6 +82,7 @@ public sealed class MembersController(
 
     [HttpPut("{membershipId:guid}/role")]
     [Authorize(Policy = PermissionCodes.MembersManage)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ChangeMemberRoleResponse>> ChangeRole(
         Guid membershipId,
         ChangeMemberRoleRequest request,
@@ -100,6 +105,7 @@ public sealed class MembersController(
 
     [HttpPut("{membershipId:guid}/deactivate")]
     [Authorize(Policy = PermissionCodes.MembersManage)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MemberStatusResponse>> Deactivate(
         Guid membershipId,
         CancellationToken cancellationToken)
@@ -117,6 +123,7 @@ public sealed class MembersController(
 
     [HttpPut("{membershipId:guid}/reactivate")]
     [Authorize(Policy = PermissionCodes.MembersManage)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MemberStatusResponse>> Reactivate(
         Guid membershipId,
         CancellationToken cancellationToken)

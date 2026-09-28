@@ -47,6 +47,7 @@ public sealed class NotificationsController(
 
     [HttpPost("{notificationId:guid}/read")]
     [Authorize(Policy = PermissionCodes.NotificationsRead)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> MarkRead(
         Guid notificationId,
         CancellationToken cancellationToken)

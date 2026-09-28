@@ -27,6 +27,8 @@ public sealed class TasksController(
     [HttpPost]
     [Authorize(Policy = PermissionCodes.TasksCreate)]
     [ProducesResponseType(typeof(CreateTaskResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CreateTaskResponse>> Create(
         CreateTaskRequest request,
         CancellationToken cancellationToken)
@@ -56,6 +58,7 @@ public sealed class TasksController(
     [HttpGet("{taskId:guid}")]
     [Authorize(Policy = PermissionCodes.TasksRead)]
     [ProducesResponseType(typeof(GetTaskResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GetTaskResponse>> Get(
         Guid taskId,
         CancellationToken cancellationToken)
@@ -80,6 +83,7 @@ public sealed class TasksController(
     [HttpPatch("{taskId:guid}")]
     [Authorize(Policy = PermissionCodes.TasksUpdate)]
     [ProducesResponseType(typeof(UpdateTaskResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UpdateTaskResponse>> Update(
         Guid taskId,
@@ -110,6 +114,7 @@ public sealed class TasksController(
     [HttpPut("{taskId:guid}/assignee")]
     [Authorize(Policy = PermissionCodes.TasksAssign)]
     [ProducesResponseType(typeof(AssignTaskResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AssignTaskResponse>> Assign(
         Guid taskId,
@@ -134,6 +139,7 @@ public sealed class TasksController(
     [HttpPut("{taskId:guid}/status")]
     [Authorize(Policy = PermissionCodes.TasksUpdate)]
     [ProducesResponseType(typeof(ChangeTaskStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ChangeTaskStatusResponse>> ChangeStatus(
         Guid taskId,

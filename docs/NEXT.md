@@ -11,12 +11,13 @@
 - Consistent API error responses — standardized empty HTTP error responses and centralized exception responses as RFC 7807 Problem Details, including request path and trace ID; unexpected errors do not expose exception details. Documented the contract in `docs/api/errors.md`.
 - OpenAPI response metadata review — documented shared validation/authentication/authorization/server-error responses on protected controllers, declared missing model-validation/auth failures for auth endpoints, and described generated document availability and metadata conventions in `docs/api/openapi.md`.
 - API rate-limiting assessment — confirmed there is no API deployment/ingress topology or trusted-proxy configuration in the repository; documented why rate limits are deferred until client-address trust and instance sharing are defined, with registration/login as initial candidates.
+- OpenAPI bearer authentication and operation errors — described JWT bearer security on non-anonymous operations and added Problem Details response metadata for handler-backed 404/409 failures; updated the OpenAPI reference.
 
 ## Current
 - No active milestone.
 
 ## Next
-- Define OpenAPI bearer-auth security metadata and review operation-specific error responses, continuing Phase 3 API hardening.
+- Review API versioning and deprecation conventions before introducing another public contract, continuing Phase 3 API hardening.
 
 ## Rule
 After every milestone, update this file.

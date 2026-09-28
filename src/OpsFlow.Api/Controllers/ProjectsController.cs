@@ -26,6 +26,7 @@ public sealed class ProjectsController(
 {
     [HttpPost]
     [Authorize(Policy = PermissionCodes.ProjectsCreate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProjectResponse>> Create(
         CreateProjectRequest request,
         CancellationToken cancellationToken)
@@ -68,6 +69,7 @@ public sealed class ProjectsController(
 
     [HttpGet("{projectId:guid}")]
     [Authorize(Policy = PermissionCodes.ProjectsRead)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProjectResponse>> GetById(
         Guid projectId,
         CancellationToken cancellationToken)
@@ -87,6 +89,7 @@ public sealed class ProjectsController(
 
     [HttpPatch("{projectId:guid}")]
     [Authorize(Policy = PermissionCodes.ProjectsUpdate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProjectResponse>> Update(
         Guid projectId,
         UpdateProjectRequest request,
@@ -110,6 +113,7 @@ public sealed class ProjectsController(
 
     [HttpPut("{projectId:guid}/archive")]
     [Authorize(Policy = PermissionCodes.ProjectsUpdate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Archive(
         Guid projectId,
         CancellationToken cancellationToken)

@@ -61,6 +61,7 @@ public sealed class FilesController(
 
     [HttpGet("{fileId:guid}")]
     [Authorize(Policy = PermissionCodes.FilesRead)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Download(
         Guid fileId,
         CancellationToken cancellationToken)
@@ -78,6 +79,7 @@ public sealed class FilesController(
 
     [HttpDelete("{fileId:guid}")]
     [Authorize(Policy = PermissionCodes.FilesDelete)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         Guid fileId,
         CancellationToken cancellationToken)

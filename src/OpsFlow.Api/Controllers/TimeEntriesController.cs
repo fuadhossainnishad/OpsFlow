@@ -27,6 +27,8 @@ public sealed class TimeEntriesController(
 {
     [HttpPost]
     [Authorize(Policy = PermissionCodes.TimeEntriesCreate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CreateTimeEntryResult>> Create(
         CreateTimeEntryRequest request,
         CancellationToken cancellationToken)
@@ -65,6 +67,7 @@ public sealed class TimeEntriesController(
 
     [HttpGet("{timeEntryId:guid}")]
     [Authorize(Policy = PermissionCodes.TimeEntriesRead)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GetTimeEntryResult>> Get(
         Guid timeEntryId,
         CancellationToken cancellationToken)
@@ -74,6 +77,8 @@ public sealed class TimeEntriesController(
 
     [HttpPatch("{timeEntryId:guid}")]
     [Authorize(Policy = PermissionCodes.TimeEntriesUpdate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UpdateTimeEntryResult>> Update(
         Guid timeEntryId,
         UpdateTimeEntryRequest request,
@@ -89,6 +94,7 @@ public sealed class TimeEntriesController(
 
     [HttpDelete("{timeEntryId:guid}")]
     [Authorize(Policy = PermissionCodes.TimeEntriesDelete)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         Guid timeEntryId,
         CancellationToken cancellationToken)

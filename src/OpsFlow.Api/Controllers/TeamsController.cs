@@ -32,6 +32,7 @@ public sealed class TeamsController(
 {
     [HttpPost]
     [Authorize(Policy = PermissionCodes.TeamsCreate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CreateTeamResult>> Create(
         CreateTeamRequest request,
         CancellationToken cancellationToken)
@@ -54,6 +55,7 @@ public sealed class TeamsController(
 
     [HttpGet("{teamId:guid}")]
     [Authorize(Policy = PermissionCodes.TeamsRead)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GetTeamResult>> Get(
         Guid teamId,
         CancellationToken cancellationToken)
@@ -63,6 +65,8 @@ public sealed class TeamsController(
 
     [HttpPatch("{teamId:guid}")]
     [Authorize(Policy = PermissionCodes.TeamsUpdate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UpdateTeamResult>> Update(
         Guid teamId,
         UpdateTeamRequest request,
@@ -73,6 +77,7 @@ public sealed class TeamsController(
 
     [HttpPut("{teamId:guid}/archive")]
     [Authorize(Policy = PermissionCodes.TeamsUpdate)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Archive(
         Guid teamId,
         CancellationToken cancellationToken)
@@ -86,6 +91,8 @@ public sealed class TeamsController(
 
     [HttpPost("{teamId:guid}/members")]
     [Authorize(Policy = PermissionCodes.TeamsManageMembers)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AddTeamMemberResult>> AddMember(
         Guid teamId,
         AddTeamMemberRequest request,
@@ -96,6 +103,8 @@ public sealed class TeamsController(
 
     [HttpDelete("{teamId:guid}/members/{membershipId:guid}")]
     [Authorize(Policy = PermissionCodes.TeamsManageMembers)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RemoveMember(
         Guid teamId,
         Guid membershipId,
@@ -110,6 +119,8 @@ public sealed class TeamsController(
 
     [HttpPut("{teamId:guid}/lead")]
     [Authorize(Policy = PermissionCodes.TeamsManageMembers)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> ChangeLead(
         Guid teamId,
         ChangeTeamLeadRequest request,
