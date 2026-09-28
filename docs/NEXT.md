@@ -12,12 +12,13 @@
 - OpenAPI response metadata review — documented shared validation/authentication/authorization/server-error responses on protected controllers, declared missing model-validation/auth failures for auth endpoints, and described generated document availability and metadata conventions in `docs/api/openapi.md`.
 - API rate-limiting assessment — confirmed there is no API deployment/ingress topology or trusted-proxy configuration in the repository; documented why rate limits are deferred until client-address trust and instance sharing are defined, with registration/login as initial candidates.
 - OpenAPI bearer authentication and operation errors — described JWT bearer security on non-anonymous operations and added Problem Details response metadata for handler-backed 404/409 failures; updated the OpenAPI reference.
+- API versioning and deprecation review — documented the existing `/api/v1` route convention, compatibility expectations, and the migration information required before a version is retired. Deferred adding versioning infrastructure until a second API version is approved.
 
 ## Current
 - No active milestone.
 
 ## Next
-- Review API versioning and deprecation conventions before introducing another public contract, continuing Phase 3 API hardening.
+- Add focused API contract verification for OpenAPI security requirements and Problem Details response metadata, continuing Phase 3 API hardening.
 
 ## Rule
 After every milestone, update this file.

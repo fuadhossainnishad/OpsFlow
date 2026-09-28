@@ -25,6 +25,7 @@ Contains HTTP/API conventions, contracts, error handling, authorization, and API
 - [API reference](api/README.md)
 - [API error response contract](api/errors.md)
 - [OpenAPI guidance](api/openapi.md)
+- [API versioning policy](api/versioning.md)
 
 ### Database
 
