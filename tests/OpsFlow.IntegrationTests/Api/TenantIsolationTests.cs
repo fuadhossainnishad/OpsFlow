@@ -91,6 +91,43 @@ public sealed class TenantIsolationTests : IClassFixture<OpsFlowWebApplicationFa
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    [Fact]
+    public async Task OrganizationScopedRequestRequiresOrganizationHeader()
+    {
+        var user = await RegisterAndLoginAsync(
+            $"tenant-no-organization-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        var response = await SendAsync(
+            HttpMethod.Get,
+            "/api/v1/projects",
+            user.AccessToken,
+            null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task OrganizationScopedRequestRejectsMalformedOrganizationHeader()
+    {
+        var user = await RegisterAndLoginAsync(
+            $"tenant-invalid-organization-{Guid.NewGuid():N}@example.com",
+            "Password123!");
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "/api/v1/projects");
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                user.AccessToken);
+        request.Headers.Add("X-Organization-Id", "not-a-guid");
+
+        using var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     private async Task<AuthResult> RegisterAndLoginAsync(
         string email,
         string password)

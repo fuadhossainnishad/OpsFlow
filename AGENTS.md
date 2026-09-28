@@ -377,20 +377,32 @@ The solution file is:
 
 ---
 
+### Local Development Services
+
+- OpsFlow may require local TCP access to services running on `localhost` (e.g. SQL Server, RabbitMQ).
+- If the sandbox blocks required local TCP access, request elevated permission rather than changing code to work around the restriction.
+- Never bypass or weaken security controls just to satisfy sandbox limitations.
+
+---
+
 ## 19. Final Reporting
 
 After completing a task, report concisely:
 
 ### Changed
+
 Files/features modified.
 
 ### Why
+
 The engineering reason for the change.
 
 ### Validation
+
 Exact tests/builds executed and their results.
 
 ### Remaining
+
 Known issues, blockers, or follow-up work.
 
 Do not claim production readiness without sufficient validation.
