@@ -18,6 +18,8 @@ using OpsFlow.Application.Abstractions.Tenancy;
 using OpsFlow.Api.Endpoints.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -131,6 +133,12 @@ builder.Services.AddDbContext<OpsFlowDbContext>(options =>
 
     options.UseSqlServer(connectionString);
 });
+builder.Services.AddHealthChecks()
+    .AddCheck(
+        "self",
+        () => HealthCheckResult.Healthy(),
+        ["live"])
+    .AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
 
 
 builder.Services.AddScoped<ListAuditLogsHandler>();
@@ -174,10 +182,14 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-
-
-
-
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live")
+}).AllowAnonymous();
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+}).AllowAnonymous();
 
 app.MapControllers();
 

@@ -26,6 +26,7 @@ Contains HTTP/API conventions, contracts, error handling, authorization, and API
 - [API error response contract](api/errors.md)
 - [OpenAPI guidance](api/openapi.md)
 - [API versioning policy](api/versioning.md)
+- [API health checks](api/health-checks.md)
 
 ### Database
 

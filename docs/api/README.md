@@ -4,3 +4,4 @@
 - [Error responses](errors.md) — shared Problem Details shape, status mapping, and validation errors.
 - [OpenAPI](openapi.md) — generated document location and response metadata conventions.
 - [Versioning and deprecation](versioning.md) — current route version and compatibility policy.
+- [Health checks](health-checks.md) — anonymous liveness and database readiness endpoints.

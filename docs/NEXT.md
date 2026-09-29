@@ -1,6 +1,7 @@
 # Next
 
 ## Completed
+- API liveness and SQL Server readiness checks — added anonymous `/health/live` and `/health/ready` endpoints; worker-owned RabbitMQ is excluded from API readiness. Documented endpoint behavior and manual requests.
 - Worker/RabbitMQ/Outbox reliability — committed and pushed.
 - API/auth hardening — validated JWT configuration at startup, required authentication by default for API routes, explicitly kept registration/login anonymous, and added invalid bearer-token coverage. Focused integration tests passed (5/5).
 - API authorization and tenant-isolation verification — audited controller authorization policies and existing organization-scoped integration coverage; added missing/malformed organization-header rejection coverage. Focused tenant-isolation integration tests passed (5/5).
@@ -19,7 +20,7 @@
 - No active milestone.
 
 ## Next
-- Review liveness and readiness health-check scope for the API and its dependencies, beginning Phase 4 observability work.
+- Continue Phase 4 observability work with structured logging and correlation/trace context review.
 
 ## Rule
 After every milestone, update this file.
